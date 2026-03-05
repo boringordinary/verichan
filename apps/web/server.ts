@@ -1,13 +1,13 @@
 import { serve } from "bun";
 
-const port = process.env.PORT ? parseInt(process.env.PORT) : 5173;
+const port = Bun.env.PORT ? parseInt(Bun.env.PORT) : 5173;
 const publicDir = "./dist";
 
 serve({
   port,
   async fetch(req: Request) {
     const url = new URL(req.url);
-    let path = url.pathname;
+    const path = url.pathname;
 
     // Health check
     if (path === "/api/health") {

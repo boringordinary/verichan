@@ -1,7 +1,7 @@
 # Dockerfile for Elysia API with Bun + Doppler
 # Build: docker build --build-arg DOPPLER_TOKEN=$DOPPLER_TOKEN -f apps/api/Dockerfile -t chanid-api .
 
-FROM oven/bun:1.3.9-alpine AS base
+FROM oven/bun:1.2.23-alpine AS base
 
 # Install Doppler CLI and bash (needed for entrypoint)
 RUN apk add --no-cache wget bash && \

@@ -1,7 +1,7 @@
 # Dockerfile for Web (Vite SPA + Bun static server)
 # Build: docker build --build-arg DOPPLER_TOKEN=$DOPPLER_TOKEN -f apps/web/Dockerfile -t chanid-web .
 
-FROM oven/bun:1.3.4-alpine AS base
+FROM oven/bun:1.2.23-alpine AS base
 
 # Install Doppler CLI
 RUN apk add --no-cache wget && \

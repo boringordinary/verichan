@@ -12,8 +12,7 @@ coverage
 
 # logs
 logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # dotenv environment variable files
 .env
@@ -38,3 +37,10 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # tanstack router
 .tanstack
+**/routeTree.gen.ts
+
+# lockfile (regenerated in Docker builds to avoid frozen lockfile issues)
+bun.lock
+
+# logs (fixed patterns)
+*.log

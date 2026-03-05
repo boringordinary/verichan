@@ -8,8 +8,6 @@
     "moduleResolution": "bundler",
     "target": "ES2022",
     "lib": ["ES2022"],
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
