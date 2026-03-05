@@ -1,12 +1,25 @@
 import { Elysia } from "elysia";
 import { db } from "./database";
+import { clientsRouter } from "./routes/v1/clients";
+import { sessionsRouter } from "./routes/v1/sessions";
+import { verificationRouter } from "./routes/v1/verification";
+import { reviewsRouter } from "./routes/v1/reviews";
+import { verifyRouter } from "./routes/v1/verify";
 
 const port = Bun.env.PORT ? parseInt(Bun.env.PORT) : 3000;
 
 const app = new Elysia()
   .decorate("db", db)
   .get("/", () => "verichan")
-  .get("/health", () => ({ status: "ok", timestamp: new Date().toISOString() }))
+  .get("/health", () => ({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+  }))
+  .use(clientsRouter)
+  .use(sessionsRouter)
+  .use(verificationRouter)
+  .use(reviewsRouter)
+  .use(verifyRouter)
   .listen(port);
 
 console.log(`Server running at ${app.server?.url}`);
