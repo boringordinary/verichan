@@ -19,6 +19,11 @@
     "db:studio": "doppler run --no-fallback -- drizzle-kit studio"
   },
   "dependencies": {
+    "@aws-sdk/client-rekognition": "^3.1002.0",
+    "@aws-sdk/client-s3": "^3.1002.0",
+    "@aws-sdk/client-textract": "^3.1002.0",
+    "@aws-sdk/s3-request-presigner": "^3.1002.0",
+    "drizzle-kit": "^0.31.9",
     "drizzle-orm": "^0.45.1",
     "drizzle-typebox": "^0.3.3",
     "elysia": "^1.4.27"
@@ -26,7 +31,6 @@
   "devDependencies": {
     "@types/bun": "^1.3.10",
     "bun-types": "^1.3.10",
-    "drizzle-kit": "^0.31.9",
     "typescript": "^5.9.3"
   }
 }
