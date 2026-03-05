@@ -1,0 +1,25 @@
+{
+  "name": "chanid",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.2.23",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "bunx --bun turbo run dev --filter=@chanid/api --filter=@chanid/web",
+    "dev:api": "bunx --bun turbo run dev --filter=@chanid/api",
+    "dev:web": "bunx --bun turbo run dev --filter=@chanid/web",
+    "build": "bunx --bun turbo run build",
+    "test": "bunx --bun turbo run test",
+    "typecheck": "bunx --bun turbo run typecheck",
+    "lint": "bunx --bun turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.11",
+    "typescript": "^5.9.3"
+  }
+}

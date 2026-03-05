@@ -1,0 +1,9 @@
+[install]
+optional = true
+saveTextLockfile = true
+frozenLockfile = false
+
+[test]
+root = "apps/api"
+timeout = 5000
+coverage = false
