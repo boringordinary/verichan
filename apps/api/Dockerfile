@@ -78,7 +78,8 @@ RUN addgroup -g 1001 -S nodejs && \
 # Copy compiled binary
 COPY --from=builder --chown=nodejs:nodejs /app/apps/api/server ./server
 
-# Copy drizzle migration files
+# Copy drizzle migration files and config
+COPY --from=builder --chown=nodejs:nodejs /app/apps/api/drizzle ./drizzle
 COPY --from=builder --chown=nodejs:nodejs /app/apps/api/src/database ./src/database
 COPY --from=builder --chown=nodejs:nodejs /app/apps/api/drizzle.config.ts ./
 COPY --from=builder --chown=nodejs:nodejs /app/apps/api/tsconfig.json ./
