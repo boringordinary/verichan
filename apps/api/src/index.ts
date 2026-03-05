@@ -1,3 +1,4 @@
+import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { db } from "./database";
 import { auth } from "./auth";
@@ -25,6 +26,12 @@ const betterAuthPlugin = new Elysia({ name: "better-auth" })
   });
 
 const app = new Elysia()
+  .use(cors({
+    origin: Bun.env.WEB_URL || "http://localhost:5173",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }))
   .decorate("db", db)
   .use(betterAuthPlugin)
   .get("/", () => "verichan")

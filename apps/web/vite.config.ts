@@ -41,6 +41,12 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true,
       open: false,
+      proxy: {
+        "/api": {
+          target: "http://localhost:3000",
+          changeOrigin: true,
+        },
+      },
     },
     build: {
       minify: isProduction ? "terser" : undefined,
