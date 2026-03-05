@@ -1,30 +1,39 @@
 import { relations } from "drizzle-orm";
-import { client, apiKey, webhookEndpoint } from "./client";
+import { organization, member, user } from "./auth";
+import { apiKey, webhookEndpoint } from "./client";
 import { verificationSession, verificationStep } from "./verification";
 import { document, selfie } from "./document";
 import { review, reviewNote } from "./review";
 import { sessionStatusHistory, webhookDelivery } from "./audit";
 
-// --- Client relations ---
+// --- Auth relations ---
 
-export const clientRelations = relations(client, ({ many }) => ({
+export const organizationRelations = relations(organization, ({ many }) => ({
   apiKeys: many(apiKey),
   webhookEndpoints: many(webhookEndpoint),
+  members: many(member),
+  verificationSessions: many(verificationSession),
 }));
 
+export const userRelations = relations(user, ({ many }) => ({
+  reviews: many(review),
+}));
+
+// --- API Key / Webhook relations ---
+
 export const apiKeyRelations = relations(apiKey, ({ one }) => ({
-  client: one(client, {
-    fields: [apiKey.clientId],
-    references: [client.id],
+  organization: one(organization, {
+    fields: [apiKey.organizationId],
+    references: [organization.id],
   }),
 }));
 
 export const webhookEndpointRelations = relations(
   webhookEndpoint,
   ({ one, many }) => ({
-    client: one(client, {
-      fields: [webhookEndpoint.clientId],
-      references: [client.id],
+    organization: one(organization, {
+      fields: [webhookEndpoint.organizationId],
+      references: [organization.id],
     }),
     deliveries: many(webhookDelivery),
   }),
@@ -34,7 +43,11 @@ export const webhookEndpointRelations = relations(
 
 export const verificationSessionRelations = relations(
   verificationSession,
-  ({ many }) => ({
+  ({ one, many }) => ({
+    organization: one(organization, {
+      fields: [verificationSession.organizationId],
+      references: [organization.id],
+    }),
     steps: many(verificationStep),
     reviews: many(review),
     statusHistory: many(sessionStatusHistory),
@@ -78,6 +91,10 @@ export const reviewRelations = relations(review, ({ one, many }) => ({
     fields: [review.sessionId],
     references: [verificationSession.id],
   }),
+  reviewer: one(user, {
+    fields: [review.reviewerId],
+    references: [user.id],
+  }),
   notes: many(reviewNote),
 }));
 
@@ -89,6 +106,10 @@ export const reviewNoteRelations = relations(reviewNote, ({ one }) => ({
   step: one(verificationStep, {
     fields: [reviewNote.stepId],
     references: [verificationStep.id],
+  }),
+  author: one(user, {
+    fields: [reviewNote.authorId],
+    references: [user.id],
   }),
 }));
 

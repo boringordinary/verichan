@@ -15,6 +15,7 @@ import {
   stepType,
   verificationTier,
 } from "./enums";
+import { organization } from "./auth";
 
 export const verificationSession = pgTable(
   "verification_session",
@@ -22,7 +23,9 @@ export const verificationSession = pgTable(
     id: text("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    organizationId: text("organization_id").notNull(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id),
     externalUserId: varchar("external_user_id", { length: 255 }),
     service: serviceType("service").notNull(),
     tier: verificationTier("tier").notNull(),
