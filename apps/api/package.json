@@ -16,6 +16,7 @@
     "db:generate": "doppler run --no-fallback -- drizzle-kit generate",
     "db:migrate": "doppler run --no-fallback -- drizzle-kit migrate",
     "db:push": "doppler run --no-fallback -- drizzle-kit push",
+    "db:seed": "doppler run --no-fallback -- bun src/database/seed.ts",
     "db:studio": "doppler run --no-fallback -- drizzle-kit studio"
   },
   "dependencies": {
