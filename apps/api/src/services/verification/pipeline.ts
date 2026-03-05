@@ -232,7 +232,11 @@ export async function runPipeline(sessionId: string): Promise<void> {
 
       await purgeImages(ctx, allSelfies, allDocuments);
 
-      // TODO: Deliver webhook notification (Task 17)
+      // Deliver webhook notification (fire and forget)
+      const { deliverWebhook } = await import("../webhooks");
+      deliverWebhook(sessionId, "session.rejected").catch((err: unknown) => {
+        console.error(`Webhook delivery error for session ${sessionId}:`, err);
+      });
       return;
     }
   }
@@ -306,7 +310,15 @@ export async function runPipeline(sessionId: string): Promise<void> {
   // Purge images from S3
   await purgeImages(ctx, allSelfies, allDocuments);
 
-  // TODO: Deliver webhook notification (Task 17)
+  // Deliver webhook notification (fire and forget)
+  const webhookEvent =
+    finalStatus === "approved"
+      ? "session.approved"
+      : "session.needs_resubmission";
+  const { deliverWebhook } = await import("../webhooks");
+  deliverWebhook(sessionId, webhookEvent).catch((err: unknown) => {
+    console.error(`Webhook delivery error for session ${sessionId}:`, err);
+  });
 }
 
 // ---------------------------------------------------------------------------
