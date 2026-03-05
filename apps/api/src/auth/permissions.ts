@@ -10,7 +10,7 @@ const statement = {
   review: ["read", "decide"],
 } as const;
 
-const baseAc = createAccessControl(statement);
+export const baseAc = createAccessControl(statement);
 
 export const admin = baseAc.newRole({
   organization: ["update"],
@@ -51,6 +51,6 @@ export const ac = {
   }): boolean {
     const r = roles[role];
     if (!r) return false;
-    return r.authorize(permissions).success;
+    return (r.authorize as (req: Record<string, string[]>) => { success: boolean })(permissions).success;
   },
 };
