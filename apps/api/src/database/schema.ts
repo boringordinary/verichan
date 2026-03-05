@@ -1,10 +1,8 @@
-import { pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
-
-export const user = pgTable("user", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  name: varchar("name", { length: 255 }).notNull(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export * from "./schema/enums";
+export * from "./schema/auth";
+export * from "./schema/client";
+export * from "./schema/verification";
+export * from "./schema/document";
+export * from "./schema/review";
+export * from "./schema/audit";
+export * from "./schema/relations";
