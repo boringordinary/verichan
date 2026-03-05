@@ -1,5 +1,5 @@
 # Dockerfile for Elysia API with Bun + Doppler
-# Build: docker build --build-arg DOPPLER_TOKEN=$DOPPLER_TOKEN -f apps/api/Dockerfile -t chanid-api .
+# Build: docker build --build-arg DOPPLER_TOKEN=$DOPPLER_TOKEN -f apps/api/Dockerfile -t verichan-api .
 
 FROM oven/bun:1.2.23-alpine AS base
 

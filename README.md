@@ -1,1 +1,1 @@
-# chanid
+# verichan

@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Convert the chanid project from a flat structure into a Turborepo monorepo with `apps/api` (Elysia backend) and `apps/web` (Vite + React frontend), including Dockerfiles for deployment.
+**Goal:** Convert the verichan project from a flat structure into a Turborepo monorepo with `apps/api` (Elysia backend) and `apps/web` (Vite + React frontend), including Dockerfiles for deployment.
 
 **Architecture:** Bun-based Turborepo monorepo modeled after the audiochan repo. The root orchestrates builds/dev via turbo. Each app has its own package.json, tsconfig.json, and Dockerfile. The API compiles to a standalone binary for production. The web app builds with Vite and serves static files via a Bun server.
 
@@ -73,7 +73,7 @@ git commit -m "chore: create monorepo directory structure and move api code"
 
 ```json
 {
-  "name": "chanid",
+  "name": "verichan",
   "private": true,
   "type": "module",
   "packageManager": "bun@1.2.23",
@@ -84,9 +84,9 @@ git commit -m "chore: create monorepo directory structure and move api code"
     "apps/*"
   ],
   "scripts": {
-    "dev": "bunx --bun turbo run dev --filter=@chanid/api --filter=@chanid/web",
-    "dev:api": "bunx --bun turbo run dev --filter=@chanid/api",
-    "dev:web": "bunx --bun turbo run dev --filter=@chanid/web",
+    "dev": "bunx --bun turbo run dev --filter=@verichan/api --filter=@verichan/web",
+    "dev:api": "bunx --bun turbo run dev --filter=@verichan/api",
+    "dev:web": "bunx --bun turbo run dev --filter=@verichan/web",
     "build": "bunx --bun turbo run build",
     "test": "bunx --bun turbo run test",
     "typecheck": "bunx --bun turbo run typecheck",
@@ -201,7 +201,7 @@ git commit -m "chore: add root monorepo configuration (turbo, bun, typescript)"
 
 ```json
 {
-  "name": "@chanid/api",
+  "name": "@verichan/api",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -291,7 +291,7 @@ const port = Bun.env.PORT ? parseInt(Bun.env.PORT) : 3000;
 
 const app = new Elysia()
   .decorate("db", db)
-  .get("/", () => "chanid")
+  .get("/", () => "verichan")
   .get("/health", () => ({ status: "ok", timestamp: new Date().toISOString() }))
   .listen(port);
 
@@ -335,7 +335,7 @@ git commit -m "chore: add api package configuration"
 
 ```json
 {
-  "name": "@chanid/web",
+  "name": "@verichan/web",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -473,7 +473,7 @@ export default defineConfig(({ mode }) => {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>chanid</title>
+    <title>verichan</title>
   </head>
   <body>
     <div id="root"></div>
@@ -536,7 +536,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <div>
-      <h1>chanid</h1>
+      <h1>verichan</h1>
     </div>
   );
 }
@@ -562,7 +562,7 @@ serve({
         JSON.stringify({
           status: "ok",
           timestamp: new Date().toISOString(),
-          service: "chanid-web",
+          service: "verichan-web",
           uptime: process.uptime(),
         }),
         {
@@ -678,7 +678,7 @@ git commit -m "feat: add web package with Vite + React + TanStack Router scaffol
 
 ```dockerfile
 # Dockerfile for Elysia API with Bun + Doppler
-# Build: docker build --build-arg DOPPLER_TOKEN=$DOPPLER_TOKEN -f apps/api/Dockerfile -t chanid-api .
+# Build: docker build --build-arg DOPPLER_TOKEN=$DOPPLER_TOKEN -f apps/api/Dockerfile -t verichan-api .
 
 FROM oven/bun:1.3.9-alpine AS base
 
@@ -836,7 +836,7 @@ git commit -m "feat: add API Dockerfile with multi-stage build"
 
 ```dockerfile
 # Dockerfile for Web (Vite SPA + Bun static server)
-# Build: docker build --build-arg DOPPLER_TOKEN=$DOPPLER_TOKEN -f apps/web/Dockerfile -t chanid-web .
+# Build: docker build --build-arg DOPPLER_TOKEN=$DOPPLER_TOKEN -f apps/web/Dockerfile -t verichan-web .
 
 FROM oven/bun:1.3.4-alpine AS base
 
@@ -984,7 +984,7 @@ Expected structure:
 bun install
 ```
 
-Expected: resolves `@chanid/api` and `@chanid/web` workspaces.
+Expected: resolves `@verichan/api` and `@verichan/web` workspaces.
 
 **Step 5: Commit**
 

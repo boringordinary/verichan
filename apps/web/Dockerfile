@@ -1,5 +1,5 @@
 # Dockerfile for Web (Vite SPA + Bun static server)
-# Build: docker build --build-arg DOPPLER_TOKEN=$DOPPLER_TOKEN -f apps/web/Dockerfile -t chanid-web .
+# Build: docker build --build-arg DOPPLER_TOKEN=$DOPPLER_TOKEN -f apps/web/Dockerfile -t verichan-web .
 
 FROM oven/bun:1.2.23-alpine AS base
 

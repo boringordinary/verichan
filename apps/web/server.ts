@@ -15,7 +15,7 @@ serve({
         JSON.stringify({
           status: "ok",
           timestamp: new Date().toISOString(),
-          service: "chanid-web",
+          service: "verichan-web",
           uptime: process.uptime(),
         }),
         {

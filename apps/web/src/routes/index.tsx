@@ -7,7 +7,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <div>
-      <h1>chanid</h1>
+      <h1>verichan</h1>
     </div>
   );
 }

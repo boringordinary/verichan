@@ -1,5 +1,5 @@
 {
-  "name": "chanid",
+  "name": "verichan",
   "private": true,
   "type": "module",
   "packageManager": "bun@1.2.23",
@@ -10,9 +10,9 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "bunx --bun turbo run dev --filter=@chanid/api --filter=@chanid/web",
-    "dev:api": "bunx --bun turbo run dev --filter=@chanid/api",
-    "dev:web": "bunx --bun turbo run dev --filter=@chanid/web",
+    "dev": "bunx --bun turbo run dev --filter=@verichan/api --filter=@verichan/web",
+    "dev:api": "bunx --bun turbo run dev --filter=@verichan/api",
+    "dev:web": "bunx --bun turbo run dev --filter=@verichan/web",
     "build": "bunx --bun turbo run build",
     "test": "bunx --bun turbo run test",
     "typecheck": "bunx --bun turbo run typecheck",
