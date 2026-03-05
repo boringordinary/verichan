@@ -49,7 +49,7 @@ export const apiKeyAuth = new Elysia({ name: "api-key-auth" }).derive(
       .execute();
 
     return {
-      clientId: found.clientId,
+      clientId: found.organizationId,
       apiKeyId: found.id,
       apiKeyEnvironment: found.environment,
     };

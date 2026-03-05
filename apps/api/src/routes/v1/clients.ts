@@ -1,27 +1,28 @@
 import { Elysia, t } from "elysia";
 import { eq } from "drizzle-orm";
 import { db } from "../../database";
-import { client, apiKey } from "../../database/schema/client";
+import { organization } from "../../database/schema/auth";
+import { apiKey } from "../../database/schema/client";
 import { hashApiKey } from "../../middleware/api-key-auth";
 
 // TODO: Add admin auth middleware when available
 
 export const clientsRouter = new Elysia({ prefix: "/v1/clients" })
-  // POST /v1/clients — Create client
+  // POST /v1/clients — Create client (organization)
   .post(
     "/",
     async ({ body }) => {
-      const [newClient] = await db
-        .insert(client)
+      const [newOrg] = await db
+        .insert(organization)
         .values({
+          id: crypto.randomUUID(),
           name: body.name,
-          webhookUrl: body.webhook_url,
         })
         .returning();
 
       return {
         success: true,
-        data: newClient,
+        data: newOrg,
       };
     },
     {
@@ -35,8 +36,8 @@ export const clientsRouter = new Elysia({ prefix: "/v1/clients" })
   .get("/:clientId", async ({ params, set }) => {
     const [found] = await db
       .select()
-      .from(client)
-      .where(eq(client.id, params.clientId))
+      .from(organization)
+      .where(eq(organization.id, params.clientId))
       .limit(1);
 
     if (!found) {
@@ -56,11 +57,11 @@ export const clientsRouter = new Elysia({ prefix: "/v1/clients" })
   .post(
     "/:clientId/api-keys",
     async ({ params, body, set }) => {
-      // Verify client exists
+      // Verify organization exists
       const [found] = await db
         .select()
-        .from(client)
-        .where(eq(client.id, params.clientId))
+        .from(organization)
+        .where(eq(organization.id, params.clientId))
         .limit(1);
 
       if (!found) {
@@ -82,7 +83,7 @@ export const clientsRouter = new Elysia({ prefix: "/v1/clients" })
       const [newKey] = await db
         .insert(apiKey)
         .values({
-          clientId: params.clientId,
+          organizationId: params.clientId,
           keyPrefix,
           keyHash,
           label: body?.label,
@@ -115,14 +116,14 @@ export const clientsRouter = new Elysia({ prefix: "/v1/clients" })
   )
   // DELETE /v1/clients/:clientId/api-keys/:keyId — Soft revoke
   .delete("/:clientId/api-keys/:keyId", async ({ params, set }) => {
-    // Verify key belongs to client
+    // Verify key belongs to organization
     const [found] = await db
       .select()
       .from(apiKey)
       .where(eq(apiKey.id, params.keyId))
       .limit(1);
 
-    if (!found || found.clientId !== params.clientId) {
+    if (!found || found.organizationId !== params.clientId) {
       set.status = 404;
       return {
         success: false,

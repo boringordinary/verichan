@@ -47,13 +47,9 @@ export async function deliverWebhook(
     .select()
     .from(webhookEndpoint)
     .innerJoin(
-      // Need to find endpoints belonging to the same org.
-      // webhookEndpoint is linked to client, and session has organizationId.
-      // We rely on clientId matching organizationId.
-      // Actually, webhookEndpoint has clientId and the session has organizationId
-      // which corresponds to the client's id.
+      // Find endpoints belonging to the same organization.
       verificationSession,
-      eq(verificationSession.organizationId, webhookEndpoint.clientId),
+      eq(verificationSession.organizationId, webhookEndpoint.organizationId),
     )
     .where(
       and(
