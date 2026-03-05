@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
       tanstackRouter({
         target: "react",
         autoCodeSplitting: true,
-      })
+      }) as ReturnType<typeof viteReact>
     );
     plugins.push(tailwindcss());
   }
