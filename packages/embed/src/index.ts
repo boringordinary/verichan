@@ -29,6 +29,7 @@ class VerichanVerify {
   private escapeHandler: ((e: KeyboardEvent) => void) | null = null;
   private capturedFile: File | null = null;
   private mediaStream: MediaStream | null = null;
+  private _sessionId: string | null = null;
 
   open(config: VerichanConfig) {
     if (!config?.sessionToken) {
@@ -44,6 +45,7 @@ class VerichanVerify {
     this.verified = false;
     this.errorMessage = "";
     this.capturedFile = null;
+    this._sessionId = null;
 
     if (!this.host) {
       this.host = document.createElement("div");
@@ -111,14 +113,13 @@ class VerichanVerify {
               this.captureFrame();
               break;
             case "submit":
+              if (!this.capturedFile) {
+                this.showError("No image captured. Please try again.");
+                break;
+              }
               this.step = "processing";
               this.render();
-              setTimeout(() => {
-                this.step = "complete";
-                this.verified = true;
-                this.render();
-                this.config.onVerified?.();
-              }, 2400);
+              this.processVerification();
               break;
             case "retry":
               this.step = "capture";
@@ -160,6 +161,8 @@ class VerichanVerify {
       const input = this.overlay?.querySelector<HTMLInputElement>('[data-input="email"]');
       input?.focus();
     });
+
+    this.resolveSession();
   }
 
   close() {
@@ -186,6 +189,99 @@ class VerichanVerify {
     this.host = null;
     this.shadow = null;
     this.overlay = null;
+  }
+
+  private get apiBase(): string {
+    return this.config.apiBaseUrl ?? "";
+  }
+
+  private async resolveSession(): Promise<boolean> {
+    try {
+      const res = await fetch(`${this.apiBase}/v1/verify/${this.config.sessionToken}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        if (res.status === 410) {
+          this.showError("This verification session has expired.");
+        } else {
+          this.showError(data?.error?.message ?? "Could not load verification session.");
+        }
+        return false;
+      }
+      const { data } = await res.json();
+      if (data.completed) {
+        this.step = "complete";
+        this.verified = true;
+        this.render();
+        this.config.onVerified?.();
+        return false;
+      }
+      this._sessionId = data.session_id;
+      return true;
+    } catch {
+      this.showError("Network error. Please check your connection and try again.");
+      return false;
+    }
+  }
+
+  private async uploadFile(): Promise<boolean> {
+    if (!this.capturedFile || !this._sessionId) return false;
+    const headers = { Authorization: `Bearer ${this.config.sessionToken}` };
+    try {
+      const formData = new FormData();
+      formData.append("file", this.capturedFile);
+
+      // Use selfie endpoint for selfie method, documents endpoint for upload
+      const endpoint = this.method === "selfie"
+        ? `${this.apiBase}/v1/sessions/${this._sessionId}/selfie`
+        : `${this.apiBase}/v1/sessions/${this._sessionId}/documents`;
+
+      if (this.method !== "selfie") {
+        formData.append("document_type", "other");
+        formData.append("side", "front");
+      }
+
+      const res = await fetch(endpoint, { method: "POST", headers, body: formData });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        this.showError(data?.error?.message ?? "Failed to upload image.");
+        return false;
+      }
+      return true;
+    } catch {
+      this.showError("Network error during upload. Please try again.");
+      return false;
+    }
+  }
+
+  private async submitSession(): Promise<boolean> {
+    if (!this._sessionId) return false;
+    const headers = { Authorization: `Bearer ${this.config.sessionToken}` };
+    try {
+      const res = await fetch(
+        `${this.apiBase}/v1/sessions/${this._sessionId}/submit`,
+        { method: "POST", headers },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        this.showError(data?.error?.message ?? "Failed to submit for verification.");
+        return false;
+      }
+      return true;
+    } catch {
+      this.showError("Network error during submission. Please try again.");
+      return false;
+    }
+  }
+
+  private async processVerification() {
+    const uploaded = await this.uploadFile();
+    if (!uploaded) return;
+    const submitted = await this.submitSession();
+    if (!submitted) return;
+    this.step = "complete";
+    this.verified = true;
+    this.render();
+    this.config.onVerified?.();
   }
 
   private async handleCheckEmail() {

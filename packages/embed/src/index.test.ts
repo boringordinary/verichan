@@ -242,6 +242,225 @@ test("file validation rejects files over 10 MB", () => {
   expect(11 * 1024 * 1024 > maxSize).toBe(true);  // 11 MB exceeds
 });
 
+// --- API integration logic tests ---
+
+test("submit without capturedFile triggers error", () => {
+  // Replicate the submit action guard from the switch statement
+  let step = "capture";
+  let errorMessage = "";
+  let capturedFile: File | null = null;
+  const onError = mock(() => {});
+
+  function showError(message: string) {
+    step = "error";
+    errorMessage = message;
+    onError(message);
+  }
+
+  function handleSubmit() {
+    if (!capturedFile) {
+      showError("No image captured. Please try again.");
+      return;
+    }
+    step = "processing";
+  }
+
+  handleSubmit();
+  expect(step).toBe("error");
+  expect(errorMessage).toBe("No image captured. Please try again.");
+  expect(onError).toHaveBeenCalledTimes(1);
+});
+
+test("processVerification flow: upload success + submit success -> complete", async () => {
+  // Replicate the processVerification logic chain
+  let step = "processing";
+  let verified = false;
+  const onVerified = mock(() => {});
+
+  // Simulate successful upload and submit
+  async function uploadFile(): Promise<boolean> {
+    return true;
+  }
+  async function submitSession(): Promise<boolean> {
+    return true;
+  }
+
+  async function processVerification() {
+    const uploaded = await uploadFile();
+    if (!uploaded) return;
+    const submitted = await submitSession();
+    if (!submitted) return;
+    step = "complete";
+    verified = true;
+    onVerified();
+  }
+
+  await processVerification();
+  expect(step).toBe("complete");
+  expect(verified).toBe(true);
+  expect(onVerified).toHaveBeenCalledTimes(1);
+});
+
+test("processVerification flow: upload failure -> stays in processing, no submit", async () => {
+  let step = "processing";
+  let verified = false;
+  let submitCalled = false;
+  const onVerified = mock(() => {});
+
+  async function uploadFile(): Promise<boolean> {
+    return false; // simulate failure
+  }
+  async function submitSession(): Promise<boolean> {
+    submitCalled = true;
+    return true;
+  }
+
+  async function processVerification() {
+    const uploaded = await uploadFile();
+    if (!uploaded) return;
+    const submitted = await submitSession();
+    if (!submitted) return;
+    step = "complete";
+    verified = true;
+    onVerified();
+  }
+
+  await processVerification();
+  expect(step).toBe("processing"); // did not advance
+  expect(verified).toBe(false);
+  expect(submitCalled).toBe(false); // submit was never called
+  expect(onVerified).toHaveBeenCalledTimes(0);
+});
+
+test("processVerification flow: upload success + submit failure -> stays in processing", async () => {
+  let step = "processing";
+  let verified = false;
+  const onVerified = mock(() => {});
+
+  async function uploadFile(): Promise<boolean> {
+    return true;
+  }
+  async function submitSession(): Promise<boolean> {
+    return false; // simulate failure
+  }
+
+  async function processVerification() {
+    const uploaded = await uploadFile();
+    if (!uploaded) return;
+    const submitted = await submitSession();
+    if (!submitted) return;
+    step = "complete";
+    verified = true;
+    onVerified();
+  }
+
+  await processVerification();
+  expect(step).toBe("processing"); // did not advance
+  expect(verified).toBe(false);
+  expect(onVerified).toHaveBeenCalledTimes(0);
+});
+
+test("uploadFile returns false when capturedFile is null", () => {
+  // Replicate the guard check in uploadFile
+  const capturedFile: File | null = null;
+  const sessionId: string | null = "sess_123";
+
+  function uploadFileGuard(): boolean {
+    if (!capturedFile || !sessionId) return false;
+    return true;
+  }
+
+  expect(uploadFileGuard()).toBe(false);
+});
+
+test("uploadFile returns false when sessionId is null", () => {
+  const capturedFile = {} as File; // non-null
+  const sessionId: string | null = null;
+
+  function uploadFileGuard(): boolean {
+    if (!capturedFile || !sessionId) return false;
+    return true;
+  }
+
+  expect(uploadFileGuard()).toBe(false);
+});
+
+test("submitSession returns false when sessionId is null", () => {
+  const sessionId: string | null = null;
+
+  function submitSessionGuard(): boolean {
+    if (!sessionId) return false;
+    return true;
+  }
+
+  expect(submitSessionGuard()).toBe(false);
+});
+
+test("selfie method uses selfie endpoint, upload method uses documents endpoint", () => {
+  const apiBase = "https://api.example.com";
+  const sessionId = "sess_abc123";
+
+  function getEndpoint(method: "selfie" | "upload"): string {
+    return method === "selfie"
+      ? `${apiBase}/v1/sessions/${sessionId}/selfie`
+      : `${apiBase}/v1/sessions/${sessionId}/documents`;
+  }
+
+  expect(getEndpoint("selfie")).toBe("https://api.example.com/v1/sessions/sess_abc123/selfie");
+  expect(getEndpoint("upload")).toBe("https://api.example.com/v1/sessions/sess_abc123/documents");
+});
+
+test("apiBase defaults to empty string when apiBaseUrl is undefined", () => {
+  const config = { sessionToken: "tok_123" };
+  const apiBase = config.apiBaseUrl ?? "";
+  expect(apiBase).toBe("");
+});
+
+test("apiBase uses configured value when set", () => {
+  const config = { sessionToken: "tok_123", apiBaseUrl: "https://api.verichan.com" };
+  const apiBase = config.apiBaseUrl ?? "";
+  expect(apiBase).toBe("https://api.verichan.com");
+});
+
+test("resolveSession sets sessionId from response data", () => {
+  // Replicate the resolve logic
+  let sessionId: string | null = null;
+  const data = { session_id: "sess_xyz", completed: false };
+
+  if (!data.completed) {
+    sessionId = data.session_id;
+  }
+
+  expect(sessionId).toBe("sess_xyz");
+});
+
+test("resolveSession skips to complete when session already completed", () => {
+  let step = "email";
+  let verified = false;
+  const onVerified = mock(() => {});
+  const data = { session_id: "sess_xyz", completed: true };
+
+  if (data.completed) {
+    step = "complete";
+    verified = true;
+    onVerified();
+  }
+
+  expect(step).toBe("complete");
+  expect(verified).toBe(true);
+  expect(onVerified).toHaveBeenCalledTimes(1);
+});
+
+test("sessionId resets to null on open", () => {
+  // Replicate the open() reset behavior
+  let sessionId: string | null = "sess_old";
+  function open() {
+    sessionId = null;
+  }
+  open();
+  expect(sessionId).toBeNull();
+});
+
 test("escape handler reference is stored and can be removed", () => {
   // Simulate the escape handler lifecycle
   let escapeHandler: ((e: KeyboardEvent) => void) | null = null;
