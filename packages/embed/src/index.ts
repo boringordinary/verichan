@@ -166,6 +166,17 @@ class VerichanVerify {
     }
   }
 
+  destroy() {
+    if (this.escapeHandler) {
+      document.removeEventListener("keydown", this.escapeHandler);
+      this.escapeHandler = null;
+    }
+    this.host?.remove();
+    this.host = null;
+    this.shadow = null;
+    this.overlay = null;
+  }
+
   private async handleCheckEmail() {
     const input = this.overlay?.querySelector<HTMLInputElement>('[data-input="email"]');
     if (!input) return;
