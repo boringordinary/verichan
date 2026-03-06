@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verichan Embed Demo</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      min-height: 100vh;
+      margin: 0;
+      background: #100d18;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      background: #b991ff;
+      color: #100d18;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover { background: #c9a8ff; }
+    .hint { color: #6b6380; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <button onclick="openVerify()">Verify Age</button>
+  <div class="hint">Try "verified@test.com" to see already-verified state</div>
+  <script src="./dist/verichan.js"></script>
+  <script>
+    function openVerify() {
+      Verichan.open({
+        onVerified: () => console.log('verified!'),
+        onCheckEmail: (email) => email === 'verified@test.com',
+      });
+    }
+  </script>
+  <script src="./dist/verichan.js"></script>
+</body>
+</html>
