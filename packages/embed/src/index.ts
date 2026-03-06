@@ -21,6 +21,7 @@ class VerichanVerify {
   private method: "selfie" | "upload" | null = null;
   private email: string = "";
   private verified: boolean = false;
+  private errorMessage: string = "";
   private escapeHandler: ((e: KeyboardEvent) => void) | null = null;
 
   open(config: VerichanConfig = {}) {
@@ -64,10 +65,8 @@ class VerichanVerify {
               this.close();
               break;
             case "back":
-              if (this.step === "consent") {
+              if (this.step === "method") {
                 this.step = "email";
-              } else if (this.step === "method") {
-                this.step = "consent";
               } else if (this.step === "capture") {
                 this.step = "method";
                 this.method = null;
@@ -100,6 +99,11 @@ class VerichanVerify {
                 this.render();
                 this.config.onVerified?.();
               }, 2400);
+              break;
+            case "retry":
+              this.step = "capture";
+              this.errorMessage = "";
+              this.render();
               break;
             case "done":
               this.close();
@@ -173,14 +177,21 @@ class VerichanVerify {
       }
     }
 
-    this.step = "consent";
+    this.step = "method";
     this.render();
+  }
+
+  private showError(message: string) {
+    this.step = "error";
+    this.errorMessage = message;
+    this.render();
+    this.config.onError?.(message);
   }
 
   private render() {
     if (!this.overlay) return;
 
-    this.overlay.innerHTML = renderStep(this.step, this.method, this.email);
+    this.overlay.innerHTML = renderStep(this.step, this.method, this.email, this.errorMessage);
   }
 }
 

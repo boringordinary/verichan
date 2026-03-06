@@ -280,36 +280,34 @@ export const css = /* css */ `
     box-shadow: 0 0 0 3px var(--vc-accent-soft);
   }
 
-  /* ── Feature list (consent step) ── */
+  /* ── Trust signals (inline on email step) ── */
 
-  .vc-features {
-    display: inline-flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 28px;
-    text-align: left;
-  }
-
-  .vc-feature {
+  .vc-trust {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-    border-radius: 10px;
-    background: var(--vc-surface);
+    justify-content: center;
+    gap: 16px;
+    margin-top: 16px;
   }
 
-  .vc-feature svg {
-    width: 16px;
-    height: 16px;
+  .vc-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .vc-trust-item svg {
+    width: 13px;
+    height: 13px;
     flex-shrink: 0;
     color: var(--vc-accent);
+    opacity: 0.7;
   }
 
-  .vc-feature span {
-    color: var(--vc-text-2);
-    font-size: 14px;
-    line-height: 1.4;
+  .vc-trust-item span {
+    color: var(--vc-text-3);
+    font-size: 12px;
+    white-space: nowrap;
   }
 
   /* ── Buttons ── */
@@ -634,6 +632,16 @@ export const css = /* css */ `
     max-width: 200px;
     margin-top: 28px;
   }
+
+  /* ── Error ── */
+
+  .vc-error { display: flex; flex-direction: column; align-items: center; padding: 12px 0; }
+  .vc-error-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(239, 68, 68, 0.07); border: 1px solid rgba(239, 68, 68, 0.18); display: flex; align-items: center; justify-content: center; }
+  .vc-error-icon svg { width: 28px; height: 28px; color: #ef4444; }
+  .vc-error-title { margin-top: 20px; color: var(--vc-text); font-size: 22px; font-weight: 650; letter-spacing: -0.025em; }
+  .vc-error-text { margin-top: 6px; color: var(--vc-text-2); font-size: 15px; line-height: 1.5; max-width: 280px; }
+  .vc-error .vc-btn-primary { max-width: 200px; margin-top: 28px; }
+  .vc-error .vc-btn-ghost { max-width: 200px; }
 
   /* ── Mobile: true full-screen ── */
 

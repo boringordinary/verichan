@@ -8,8 +8,8 @@ test("renderStep does not include data-direction attribute", () => {
   expect(html).not.toContain("data-direction");
 });
 
-test("renderStep shows back button on consent, method, capture steps", () => {
-  for (const step of ["consent", "method", "capture"] as const) {
+test("renderStep shows back button on method and capture steps", () => {
+  for (const step of ["method", "capture"] as const) {
     const html = renderStep(step, "selfie", "");
     expect(html).toContain('data-action="back"');
   }
@@ -23,7 +23,7 @@ test("renderStep hides back button on email, processing, complete steps", () => 
 });
 
 test("renderStep shows close button on all steps except processing", () => {
-  for (const step of ["email", "consent", "method", "capture", "complete"] as const) {
+  for (const step of ["email", "method", "capture", "complete"] as const) {
     const html = renderStep(step, "selfie", "");
     expect(html).toContain('data-action="close"');
   }
@@ -93,16 +93,14 @@ test("verified flag resets on open", () => {
   expect(onDismiss).toHaveBeenCalledTimes(1);
 });
 
-test("back action navigates capture -> method -> consent -> email", () => {
+test("back action navigates capture -> method -> email", () => {
   let step: string = "capture";
   let method: string | null = "selfie";
 
   // Replicate the back action logic from the switch statement
   function goBack() {
-    if (step === "consent") {
+    if (step === "method") {
       step = "email";
-    } else if (step === "method") {
-      step = "consent";
     } else if (step === "capture") {
       step = "method";
       method = null;
@@ -114,11 +112,7 @@ test("back action navigates capture -> method -> consent -> email", () => {
   expect(step).toBe("method");
   expect(method).toBeNull();
 
-  // From method -> consent
-  goBack();
-  expect(step).toBe("consent");
-
-  // From consent -> email
+  // From method -> email
   goBack();
   expect(step).toBe("email");
 
@@ -127,25 +121,29 @@ test("back action navigates capture -> method -> consent -> email", () => {
   expect(step).toBe("email");
 });
 
-test("back action from method does not clear method when going to consent", () => {
-  let step: string = "method";
-  let method: string | null = null;
+// --- Error step tests ---
 
-  function goBack() {
-    if (step === "consent") {
-      step = "email";
-    } else if (step === "method") {
-      step = "consent";
-    } else if (step === "capture") {
-      step = "method";
-      method = null;
-    }
-  }
+test("renderStep error step contains custom error message", () => {
+  const html = renderStep("error", null, "", "Custom error");
+  expect(html).toContain("Custom error");
+  expect(html).toContain("Something went wrong");
+});
 
-  goBack();
-  expect(step).toBe("consent");
-  // method is only cleared when going back from capture
-  expect(method).toBeNull();
+test("renderStep error step uses default message when none provided", () => {
+  const html = renderStep("error", null, "");
+  expect(html).toContain("An unexpected error occurred. Please try again.");
+});
+
+test("error step shows close button and no back button", () => {
+  const html = renderStep("error", null, "");
+  expect(html).toContain('data-action="close"');
+  expect(html).not.toContain('data-action="back"');
+});
+
+test("error step contains retry button with data-action retry", () => {
+  const html = renderStep("error", null, "");
+  expect(html).toContain('data-action="retry"');
+  expect(html).toContain("Try again");
 });
 
 test("escape handler reference is stored and can be removed", () => {

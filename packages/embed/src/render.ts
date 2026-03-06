@@ -8,16 +8,15 @@ import {
   imageIcon,
   checkIcon,
   mailIcon,
-  globeIcon,
 } from "./icons";
 
-export type Step = "email" | "already-verified" | "consent" | "method" | "capture" | "processing" | "complete";
+export type Step = "email" | "already-verified" | "method" | "capture" | "processing" | "complete" | "error";
 
 const smallCheck = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
 
 function stepDots(current: number): string {
   return `<div class="vc-steps">${
-    [0, 1, 2].map(i => {
+    [0, 1].map(i => {
       const cls = i < current ? "is-done" : i === current ? "is-active" : "";
       return `<div class="vc-dot ${cls}"></div>`;
     }).join("")
@@ -47,13 +46,27 @@ function emailBody(email: string): string {
   return `
     <div class="vc-body">
       <div class="vc-email-icon">${mailIcon}</div>
-      <div class="vc-title">Enter your email</div>
-      <div class="vc-subtitle">Your email links your verification across Verichan sites — verify once, access everywhere.</div>
+      <div class="vc-title">Verify your identity</div>
+      <div class="vc-subtitle">A quick one-time check with your photo ID. Enter your email to get started.</div>
       <div class="vc-email-field">
         <input type="email" class="vc-email-input" placeholder="you@example.com" data-input="email" value="${escaped}" autocomplete="email" />
       </div>
+      <div class="vc-trust">
+        <div class="vc-trust-item">
+          ${smallCheck}
+          <span>30 seconds</span>
+        </div>
+        <div class="vc-trust-item">
+          ${smallCheck}
+          <span>Images never stored</span>
+        </div>
+        <div class="vc-trust-item">
+          ${smallCheck}
+          <span>Works across all sites</span>
+        </div>
+      </div>
       <button class="vc-btn-primary" data-action="check-email">Continue</button>
-      <div class="vc-footnote">We'll never send you marketing emails.</div>
+      <div class="vc-footnote">Your data is processed securely and discarded immediately.</div>
     </div>`;
 }
 
@@ -70,39 +83,10 @@ function alreadyVerifiedBody(): string {
     </div>`;
 }
 
-function consentBody(): string {
-  return `
-    <div class="vc-body">
-      ${stepDots(0)}
-      <div class="vc-title">Verify your identity</div>
-      <div class="vc-subtitle">A quick one-time check with your photo ID.</div>
-      <div class="vc-features">
-        <div class="vc-feature">
-          ${smallCheck}
-          <span>Takes about 30 seconds</span>
-        </div>
-        <div class="vc-feature">
-          ${smallCheck}
-          <span>Images are never stored</span>
-        </div>
-        <div class="vc-feature">
-          ${smallCheck}
-          <span>Only your age is confirmed</span>
-        </div>
-        <div class="vc-feature">
-          ${globeIcon}
-          <span>Works across all Verichan sites</span>
-        </div>
-      </div>
-      <button class="vc-btn-primary" data-action="method">Continue</button>
-      <div class="vc-footnote">Your data is processed securely and discarded immediately.</div>
-    </div>`;
-}
-
 function methodBody(): string {
   return `
     <div class="vc-body">
-      ${stepDots(1)}
+      ${stepDots(0)}
       <div class="vc-title">How would you like to verify?</div>
       <div class="vc-subtitle">Choose the option that works best for you.</div>
       <div class="vc-methods">
@@ -129,7 +113,7 @@ function captureBody(method: "selfie" | "upload"): string {
   if (method === "selfie") {
     return `
       <div class="vc-body">
-        ${stepDots(2)}
+        ${stepDots(1)}
         <div class="vc-title">Hold your ID next to your face</div>
         <div class="vc-subtitle">Make sure both are clearly visible.</div>
         <div class="vc-capture">
@@ -144,7 +128,7 @@ function captureBody(method: "selfie" | "upload"): string {
   }
   return `
     <div class="vc-body">
-      ${stepDots(2)}
+      ${stepDots(1)}
       <div class="vc-title">Upload your ID</div>
       <div class="vc-subtitle">Make sure all details are clearly visible.</div>
       <div class="vc-upload" data-action="submit">
@@ -167,6 +151,20 @@ function processingBody(): string {
     </div>`;
 }
 
+function errorBody(message: string): string {
+  const errorIcon = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+  return `
+    <div class="vc-body">
+      <div class="vc-error">
+        <div class="vc-error-icon">${errorIcon}</div>
+        <div class="vc-error-title">Something went wrong</div>
+        <div class="vc-error-text">${message}</div>
+        <button class="vc-btn-primary" data-action="retry">Try again</button>
+        <button class="vc-btn-ghost" data-action="close">Close</button>
+      </div>
+    </div>`;
+}
+
 function completeBody(): string {
   return `
     <div class="vc-body">
@@ -180,20 +178,20 @@ function completeBody(): string {
     </div>`;
 }
 
-export function renderStep(step: Step, method: "selfie" | "upload" | null, email: string = ""): string {
+export function renderStep(step: Step, method: "selfie" | "upload" | null, email: string = "", errorMessage?: string): string {
   let body: string;
   switch (step) {
     case "email": body = emailBody(email); break;
     case "already-verified": body = alreadyVerifiedBody(); break;
-    case "consent": body = consentBody(); break;
     case "method": body = methodBody(); break;
     case "capture": body = captureBody(method ?? "upload"); break;
     case "processing": body = processingBody(); break;
     case "complete": body = completeBody(); break;
+    case "error": body = errorBody(errorMessage ?? "An unexpected error occurred. Please try again."); break;
   }
 
   const showClose = step !== "processing";
-  const showBack = step === "consent" || step === "method" || step === "capture";
+  const showBack = step === "method" || step === "capture";
 
   return `
     <div class="vc-modal">
