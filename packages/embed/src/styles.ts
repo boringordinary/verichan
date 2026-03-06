@@ -194,14 +194,6 @@ export const css = /* css */ `
     from { opacity: 0; transform: translateX(12px); }
   }
 
-  @keyframes vc-content-back {
-    from { opacity: 0; transform: translateX(-12px); }
-  }
-
-  .vc-modal[data-direction="back"] .vc-body {
-    animation-name: vc-content-back;
-  }
-
   /* ── Step dots ── */
 
   .vc-steps {
