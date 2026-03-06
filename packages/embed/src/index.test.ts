@@ -189,6 +189,40 @@ test("upload capture render has change file button", () => {
   expect(html).toContain('class="vc-upload-change"');
 });
 
+// --- Selfie capture tests ---
+
+test("selfie capture render has video element", () => {
+  const html = renderStep("capture", "selfie", "");
+  expect(html).toContain("<video");
+  expect(html).toContain('class="vc-video"');
+});
+
+test("selfie capture render has canvas element", () => {
+  const html = renderStep("capture", "selfie", "");
+  expect(html).toContain("<canvas");
+  expect(html).toContain('class="vc-canvas"');
+});
+
+test("selfie capture render has capture-frame button", () => {
+  const html = renderStep("capture", "selfie", "");
+  expect(html).toContain('data-action="capture-frame"');
+  expect(html).toContain("Capture");
+});
+
+test("selfie capture render has capture-frame button disabled by default", () => {
+  const html = renderStep("capture", "selfie", "");
+  // The button with capture-frame should be disabled
+  const match = html.match(/data-action="capture-frame"[^>]*>/);
+  expect(match).toBeTruthy();
+  expect(match![0]).toContain("disabled");
+});
+
+test("selfie capture render has loading indicator", () => {
+  const html = renderStep("capture", "selfie", "");
+  expect(html).toContain('class="vc-capture-loading"');
+  expect(html).toContain("Starting camera...");
+});
+
 // --- File validation logic tests ---
 
 test("file validation rejects invalid MIME types", () => {

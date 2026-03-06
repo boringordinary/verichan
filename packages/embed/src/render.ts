@@ -118,12 +118,16 @@ function captureBody(method: "selfie" | "upload"): string {
         <div class="vc-subtitle">Make sure both are clearly visible.</div>
         <div class="vc-capture">
           <div class="vc-capture-viewport">
-            <div class="vc-face-guide">${personIcon}</div>
-            <div class="vc-capture-hint">Position yourself in the frame</div>
+            <video class="vc-video" autoplay playsinline muted></video>
+            <canvas class="vc-canvas" style="display:none"></canvas>
+            <div class="vc-capture-loading">
+              <div class="vc-spinner"></div>
+              <div class="vc-capture-hint">Starting camera...</div>
+            </div>
           </div>
           <div class="vc-capture-footer">Good lighting helps verify faster</div>
         </div>
-        <button class="vc-btn-primary" data-action="submit">Capture</button>
+        <button class="vc-btn-primary" data-action="capture-frame" disabled>Capture</button>
       </div>`;
   }
   return `

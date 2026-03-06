@@ -28,6 +28,7 @@ class VerichanVerify {
   private errorMessage: string = "";
   private escapeHandler: ((e: KeyboardEvent) => void) | null = null;
   private capturedFile: File | null = null;
+  private mediaStream: MediaStream | null = null;
 
   open(config: VerichanConfig) {
     if (!config?.sessionToken) {
@@ -106,6 +107,9 @@ class VerichanVerify {
             case "pick-file":
               this.openFilePicker();
               break;
+            case "capture-frame":
+              this.captureFrame();
+              break;
             case "submit":
               this.step = "processing";
               this.render();
@@ -159,6 +163,7 @@ class VerichanVerify {
   }
 
   close() {
+    this.stopCamera();
     if (this.overlay) {
       this.overlay.setAttribute("aria-hidden", "true");
     }
@@ -172,6 +177,7 @@ class VerichanVerify {
   }
 
   destroy() {
+    this.stopCamera();
     if (this.escapeHandler) {
       document.removeEventListener("keydown", this.escapeHandler);
       this.escapeHandler = null;
@@ -252,11 +258,70 @@ class VerichanVerify {
     input.click();
   }
 
+  private async startCamera() {
+    const video = this.overlay?.querySelector<HTMLVideoElement>(".vc-video");
+    const loading = this.overlay?.querySelector<HTMLElement>(".vc-capture-loading");
+    const captureBtn = this.overlay?.querySelector<HTMLButtonElement>("[data-action='capture-frame']");
+    if (!video) return;
+    try {
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      video.srcObject = this.mediaStream;
+      await video.play();
+      loading?.remove();
+      captureBtn?.removeAttribute("disabled");
+    } catch (err) {
+      this.showError(
+        err instanceof DOMException && err.name === "NotAllowedError"
+          ? "Camera access was denied. Please allow camera access and try again."
+          : "Could not access camera. Please try the upload option instead."
+      );
+    }
+  }
+
+  private stopCamera() {
+    if (this.mediaStream) {
+      for (const track of this.mediaStream.getTracks()) track.stop();
+      this.mediaStream = null;
+    }
+  }
+
+  private captureFrame() {
+    const video = this.overlay?.querySelector<HTMLVideoElement>(".vc-video");
+    const canvas = this.overlay?.querySelector<HTMLCanvasElement>(".vc-canvas");
+    if (!video || !canvas) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+    this.stopCamera();
+    canvas.toBlob((blob) => {
+      if (blob) {
+        this.capturedFile = new File([blob], "selfie.jpg", { type: "image/jpeg" });
+        video.style.display = "none";
+        canvas.style.display = "block";
+        // Change capture button to submit
+        const captureBtn = this.overlay?.querySelector<HTMLButtonElement>("[data-action='capture-frame']");
+        if (captureBtn) {
+          captureBtn.textContent = "Submit";
+          captureBtn.dataset.action = "submit";
+        }
+      }
+    }, "image/jpeg", 0.92);
+  }
+
   private render() {
     if (!this.overlay) return;
+    this.stopCamera();
 
     this.overlay.innerHTML = renderStep(this.step, this.method, this.email, this.errorMessage);
 
+    if (this.step === "capture" && this.method === "selfie") {
+      this.startCamera();
+    }
     if (this.step === "capture" && this.method === "upload") {
       const dropZone = this.overlay.querySelector<HTMLElement>(".vc-upload");
       if (dropZone) {
