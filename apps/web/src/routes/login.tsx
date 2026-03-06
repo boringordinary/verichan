@@ -51,7 +51,33 @@ function Spinner() {
   );
 }
 
+/* ── Shared styles ── */
+
+const inputClass =
+  "h-11 w-full rounded-[4px] border-none bg-[#1e1b2e] px-3 text-[15px] text-white outline-none transition-all placeholder:text-[#6b6380] focus:ring-2 focus:ring-primary/60 disabled:opacity-50";
+const primaryBtnClass =
+  "h-11 w-full cursor-pointer rounded-[4px] bg-primary font-medium text-white transition-colors hover:bg-primary-dark active:bg-primary-darker disabled:cursor-not-allowed disabled:opacity-50";
+const labelClass =
+  "block text-[11px] font-bold uppercase tracking-[0.04em] text-[#b5bac1]";
+
+function ErrorBanner({ error }: { error: string | null }) {
+  if (!error) return null;
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      className="mb-4"
+    >
+      <div className="rounded-lg border border-danger/20 bg-danger/10 px-3 py-2.5">
+        <p className="text-center text-sm text-danger">{error}</p>
+      </div>
+    </motion.div>
+  );
+}
+
 /* ── Login form panel ── */
+
+type LoginMethod = "magic-link" | "otp";
 
 function LoginPanel({
   onSwitchMode,
@@ -61,14 +87,17 @@ function LoginPanel({
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSent, setIsSent] = useState(false);
+  const [method, setMethod] = useState<LoginMethod>("otp");
+  // Magic link state
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  // OTP state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
+  const sendMagicLink = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!email) {
-      setError("Email is required");
-      return;
-    }
+    if (!email) { setError("Email is required"); return; }
     setIsSubmitting(true);
     setError(null);
 
@@ -78,94 +107,62 @@ function LoginPanel({
     });
 
     setIsSubmitting(false);
-
     if (error) {
       setError(error.message || "Failed to send magic link");
     } else {
-      setIsSent(true);
+      setMagicLinkSent(true);
     }
+  };
+
+  const sendOTP = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!email) { setError("Email is required"); return; }
+    setIsSubmitting(true);
+    setError(null);
+
+    const { error } = await authClient.emailOtp.sendVerificationOtp({
+      email: email.toLowerCase(),
+      type: "sign-in",
+    });
+
+    setIsSubmitting(false);
+    if (error) {
+      setError(error.message || "Failed to send code");
+    } else {
+      setOtpSent(true);
+    }
+  };
+
+  const verifyOTP = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!otp) { setError("Enter the code from your email"); return; }
+    setIsVerifying(true);
+    setError(null);
+
+    const { error } = await authClient.signIn.emailOtp({
+      email: email.toLowerCase(),
+      otp,
+    });
+
+    setIsVerifying(false);
+    if (error) {
+      setError(error.message || "Invalid or expired code");
+    }
+    // On success, BetterAuth sets the session cookie and the client auto-redirects
+  };
+
+  const resetForm = () => {
+    setMagicLinkSent(false);
+    setOtpSent(false);
+    setOtp("");
+    setEmail("");
+    setError(null);
   };
 
   return (
     <AnimatePresence mode="wait">
-      {!isSent ? (
-        <motion.div
-          key="login-form"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-        >
-          <div className="mb-6 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight text-white">
-              Welcome back!
-            </h1>
-            <p className="mt-1 text-[15px] text-[#9890a8]">
-              Sign in with a magic link — no password needed.
-            </p>
-          </div>
-
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              className="mb-4"
-            >
-              <div className="rounded-lg border border-danger/20 bg-danger/10 px-3 py-2.5">
-                <p className="text-center text-sm text-danger">{error}</p>
-              </div>
-            </motion.div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label
-                htmlFor="login-email"
-                className="block text-[11px] font-bold uppercase tracking-[0.04em] text-[#b5bac1]"
-              >
-                Email
-                <span className="ml-0.5 text-danger">*</span>
-              </label>
-              <input
-                id="login-email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isSubmitting}
-                autoFocus
-                className="h-11 w-full rounded-[4px] border-none bg-[#1e1b2e] px-3 text-[15px] text-white outline-none transition-all placeholder:text-[#6b6380] focus:ring-2 focus:ring-primary/60 disabled:opacity-50"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="mt-5 h-11 w-full cursor-pointer rounded-[4px] bg-primary font-medium text-white transition-colors hover:bg-primary-dark active:bg-primary-darker disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Spinner />
-                  Sending...
-                </span>
-              ) : (
-                "Log In"
-              )}
-            </button>
-
-            <p className="mt-4 text-[13px] text-[#6b6380]">
-              Need an account?{" "}
-              <button
-                type="button"
-                onClick={onSwitchMode}
-                className="cursor-pointer bg-transparent text-primary-light hover:underline"
-              >
-                Sign up
-              </button>
-            </p>
-          </form>
-        </motion.div>
-      ) : (
+      {/* ── Magic link sent confirmation ── */}
+      {magicLinkSent ? (
         <motion.div
           key="login-sent"
           initial={{ opacity: 0 }}
@@ -193,26 +190,146 @@ function LoginPanel({
           </p>
 
           <div className="mt-6 space-y-2">
-            <button
-              type="button"
-              onClick={() => handleSubmit()}
-              disabled={isSubmitting}
-              className="h-11 w-full cursor-pointer rounded-[4px] bg-primary font-medium text-white transition-colors hover:bg-primary-dark active:bg-primary-darker disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            <button type="button" onClick={() => sendMagicLink()} disabled={isSubmitting} className={primaryBtnClass}>
               {isSubmitting ? "Sending..." : "Resend link"}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsSent(false);
-                setEmail("");
-                setError(null);
-              }}
-              className="h-9 w-full cursor-pointer rounded-[4px] bg-transparent text-sm text-[#9890a8] transition-colors hover:text-white hover:underline"
-            >
+            <button type="button" onClick={resetForm} className="h-9 w-full cursor-pointer rounded-[4px] bg-transparent text-sm text-[#9890a8] transition-colors hover:text-white hover:underline">
               Use a different email
             </button>
           </div>
+        </motion.div>
+
+      /* ── OTP verification step ── */
+      ) : otpSent ? (
+        <motion.div
+          key="login-otp-verify"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight text-white">
+              Enter your code
+            </h1>
+            <p className="mt-1 text-[15px] text-[#9890a8]">
+              We sent a 6-digit code to <span className="font-medium text-white">{email}</span>
+            </p>
+          </div>
+
+          <ErrorBanner error={error} />
+
+          <form onSubmit={verifyOTP}>
+            <div className="space-y-2">
+              <label htmlFor="login-otp" className={labelClass}>
+                Verification code
+                <span className="ml-0.5 text-danger">*</span>
+              </label>
+              <input
+                id="login-otp"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                required
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                disabled={isVerifying}
+                autoFocus
+                placeholder="000000"
+                className={`${inputClass} text-center text-xl font-mono tracking-[0.3em]`}
+              />
+            </div>
+
+            <button type="submit" disabled={isVerifying || otp.length < 6} className={`mt-5 ${primaryBtnClass}`}>
+              {isVerifying ? (
+                <span className="flex items-center justify-center gap-2"><Spinner />Verifying...</span>
+              ) : (
+                "Verify"
+              )}
+            </button>
+
+            <div className="mt-4 flex items-center justify-between text-[13px] text-[#6b6380]">
+              <button type="button" onClick={() => sendOTP()} disabled={isSubmitting} className="cursor-pointer bg-transparent text-primary-light hover:underline disabled:opacity-50">
+                {isSubmitting ? "Sending..." : "Resend code"}
+              </button>
+              <button type="button" onClick={() => { setOtpSent(false); setOtp(""); setError(null); }} className="cursor-pointer bg-transparent hover:text-white">
+                Change email
+              </button>
+            </div>
+          </form>
+        </motion.div>
+
+      /* ── Email entry form ── */
+      ) : (
+        <motion.div
+          key="login-form"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight text-white">
+              Welcome back!
+            </h1>
+            <p className="mt-1 text-[15px] text-[#9890a8]">
+              {method === "otp"
+                ? "We'll send a code to your email."
+                : "We'll send a sign-in link to your email."}
+            </p>
+          </div>
+
+          <ErrorBanner error={error} />
+
+          <form onSubmit={method === "otp" ? sendOTP : sendMagicLink}>
+            <div className="space-y-2">
+              <label htmlFor="login-email" className={labelClass}>
+                Email
+                <span className="ml-0.5 text-danger">*</span>
+              </label>
+              <input
+                id="login-email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isSubmitting}
+                autoFocus
+                className={inputClass}
+              />
+            </div>
+
+            <button type="submit" disabled={isSubmitting} className={`mt-5 ${primaryBtnClass}`}>
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2"><Spinner />Sending...</span>
+              ) : (
+                "Log In"
+              )}
+            </button>
+
+            {/* Method toggle */}
+            <div className="mt-3 text-center">
+              <button
+                type="button"
+                onClick={() => { setMethod(method === "otp" ? "magic-link" : "otp"); setError(null); }}
+                className="cursor-pointer bg-transparent text-[13px] text-[#6b6380] hover:text-[#9890a8] transition-colors"
+              >
+                {method === "otp" ? "Use a magic link instead" : "Use a sign-in code instead"}
+              </button>
+            </div>
+
+            <p className="mt-3 text-[13px] text-[#6b6380]">
+              Need an account?{" "}
+              <button
+                type="button"
+                onClick={onSwitchMode}
+                className="cursor-pointer bg-transparent text-primary-light hover:underline"
+              >
+                Sign up
+              </button>
+            </p>
+          </form>
         </motion.div>
       )}
     </AnimatePresence>
@@ -232,6 +349,8 @@ function SignupPanel({
   const [isVerified, setIsVerified] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
   const startVerification = useCallback(
     async (e?: React.FormEvent) => {
@@ -250,15 +369,15 @@ function SignupPanel({
           onVerified: async () => {
             setIsVerifying(false);
             setIsVerified(true);
-            // Send magic link after verification
+            // Send OTP to create account after verification
             setIsSending(true);
-            const { error } = await authClient.signIn.magicLink({
+            const { error } = await authClient.emailOtp.sendVerificationOtp({
               email: email.toLowerCase(),
-              callbackURL: "/dashboard",
+              type: "sign-in",
             });
             setIsSending(false);
             if (error) {
-              setError(error.message || "Failed to send magic link");
+              setError(error.message || "Failed to send verification code");
             } else {
               setIsSent(true);
             }
@@ -283,32 +402,99 @@ function SignupPanel({
     <AnimatePresence mode="wait">
       {isSent ? (
         <motion.div
-          key="signup-sent"
+          key="signup-otp"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="py-4 text-center"
+          transition={{ duration: 0.15 }}
         >
-          <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-success/20 bg-success/10"
-          >
-            <svg className="h-7 w-7 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </motion.div>
+          <div className="mb-5 text-center">
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-success/20 bg-success/10"
+            >
+              <svg className="h-6 w-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </motion.div>
+            <h2 className="text-xl font-semibold text-white">Verified! Almost there.</h2>
+            <p className="mt-1 text-[15px] text-[#9890a8]">
+              Enter the 6-digit code we sent to <span className="font-medium text-white">{email}</span>
+            </p>
+          </div>
 
-          <h2 className="text-xl font-semibold text-white">You're all set!</h2>
-          <p className="mt-2 text-[15px] text-[#9890a8]">
-            We sent a sign-in link to
-          </p>
-          <p className="mt-1 text-[15px] font-medium text-white">{email}</p>
-          <p className="mt-3 text-[13px] text-[#6b6380]">
-            Click the link to finish creating your account.
-          </p>
+          <ErrorBanner error={error} />
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!otp) { setError("Enter the code from your email"); return; }
+              setIsVerifyingOtp(true);
+              setError(null);
+              const { error } = await authClient.signIn.emailOtp({
+                email: email.toLowerCase(),
+                otp,
+              });
+              setIsVerifyingOtp(false);
+              if (error) {
+                setError(error.message || "Invalid or expired code");
+              }
+            }}
+          >
+            <div className="space-y-2">
+              <label htmlFor="signup-otp" className={labelClass}>
+                Verification code
+                <span className="ml-0.5 text-danger">*</span>
+              </label>
+              <input
+                id="signup-otp"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                required
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                disabled={isVerifyingOtp}
+                autoFocus
+                placeholder="000000"
+                className={`${inputClass} text-center text-xl font-mono tracking-[0.3em]`}
+              />
+            </div>
+
+            <button type="submit" disabled={isVerifyingOtp || otp.length < 6} className={`mt-5 ${primaryBtnClass}`}>
+              {isVerifyingOtp ? (
+                <span className="flex items-center justify-center gap-2"><Spinner />Creating account...</span>
+              ) : (
+                "Create account"
+              )}
+            </button>
+
+            <div className="mt-4 flex items-center justify-between text-[13px] text-[#6b6380]">
+              <button
+                type="button"
+                onClick={async () => {
+                  setError(null);
+                  setIsSending(true);
+                  const { error } = await authClient.emailOtp.sendVerificationOtp({
+                    email: email.toLowerCase(),
+                    type: "sign-in",
+                  });
+                  setIsSending(false);
+                  if (error) setError(error.message || "Failed to resend code");
+                }}
+                disabled={isSending}
+                className="cursor-pointer bg-transparent text-primary-light hover:underline disabled:opacity-50"
+              >
+                {isSending ? "Sending..." : "Resend code"}
+              </button>
+              <button type="button" onClick={onSwitchMode} className="cursor-pointer bg-transparent hover:text-white">
+                Back to login
+              </button>
+            </div>
+          </form>
         </motion.div>
       ) : (
         <motion.div

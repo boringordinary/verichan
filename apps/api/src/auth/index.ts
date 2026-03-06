@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { magicLink } from "better-auth/plugins/magic-link";
+import { emailOTP } from "better-auth/plugins/email-otp";
 import { organization } from "better-auth/plugins/organization";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createElement } from "react";
@@ -7,6 +8,7 @@ import { db } from "../database";
 import * as schema from "../database/schema";
 import { baseAc, admin, manager, viewer, reviewer } from "./permissions";
 import MagicLinkEmail from "../emails/magic-link";
+import OTPEmail from "../emails/otp";
 import OrganizationInvitationEmail from "../emails/organization-invitation";
 import { sendEmail } from "../lib/email";
 
@@ -25,7 +27,23 @@ export const auth = betterAuth({
           react: createElement(MagicLinkEmail, { signInUrl: url }),
         });
       },
-      disableSignUp: true,
+    }),
+    emailOTP({
+      otpLength: 6,
+      expiresIn: 300,
+      sendVerificationOTP: async ({ email, otp, type }) => {
+        const subjects: Record<string, string> = {
+          "sign-in": "Your Verichan sign-in code",
+          "email-verification": "Verify your email for Verichan",
+          "forget-password": "Reset your Verichan password",
+          "change-email": "Confirm your new email for Verichan",
+        };
+        await sendEmail({
+          to: email,
+          subject: subjects[type] || "Your Verichan verification code",
+          react: createElement(OTPEmail, { otp, type }),
+        });
+      },
     }),
     organization({
       ac: baseAc,

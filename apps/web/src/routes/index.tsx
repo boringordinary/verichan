@@ -1,4 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useForm } from "@tanstack/react-form";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { LoginPromptModal } from "../features/shared/components/primitives/modal";
@@ -11,8 +12,6 @@ export const Route = createFileRoute("/")({
 function Index() {
 	const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-	const [heroEmail, setHeroEmail] = useState("");
-
 	const openDemo = useCallback((email?: string) => {
 		import("@verichan/embed").then(({ default: sdk }) => {
 			sdk.open({
@@ -23,6 +22,13 @@ function Index() {
 			});
 		});
 	}, []);
+
+	const heroForm = useForm({
+		defaultValues: { email: "" },
+		onSubmit: ({ value }) => {
+			openDemo(value.email.trim());
+		},
+	});
 
 	return (
 		<MarketingLayout onSignInClick={() => setIsLoginModalOpen(true)}>
@@ -55,29 +61,69 @@ function Index() {
 							</p>
 
 							<form
-								className="mt-8 flex w-full max-w-md gap-2"
+								className="mt-8 w-full max-w-md"
 								onSubmit={(e) => {
 									e.preventDefault();
-									if (heroEmail.trim() && heroEmail.includes("@")) {
-										openDemo(heroEmail.trim());
-									}
+									e.stopPropagation();
+									heroForm.handleSubmit();
 								}}
 							>
-								<input
-									type="email"
-									value={heroEmail}
-									onChange={(e) => setHeroEmail(e.target.value)}
-									placeholder="you@example.com"
-									className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-white/20 focus:bg-white/[0.08]"
-									autoComplete="email"
-								/>
-								<button
-									type="submit"
-									className="cursor-pointer whitespace-nowrap rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#0a0811] hover:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed"
-									disabled={!heroEmail.trim() || !heroEmail.includes("@")}
+								<heroForm.Field
+									name="email"
+									validators={{
+										onChangeListenTo: ["email"],
+										onChange: ({ value }) => {
+											const v = value.trim();
+											if (!v) return "Email is required";
+											if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))
+												return "Please enter a valid email address";
+											return undefined;
+										},
+										onBlur: ({ value }) => {
+											const v = value.trim();
+											if (!v) return "Email is required";
+											if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))
+												return "Please enter a valid email address";
+											return undefined;
+										},
+									}}
 								>
-									Get verified
-								</button>
+									{(field) => {
+										const showError = field.state.meta.isTouched && field.state.meta.errors.length > 0;
+										return (
+											<div>
+												<div className="flex gap-2">
+													<input
+														type="email"
+														name={field.name}
+														value={field.state.value}
+														onChange={(e) => field.handleChange(e.target.value)}
+														onBlur={field.handleBlur}
+														placeholder="you@example.com"
+														className={`min-w-0 flex-1 rounded-lg border bg-white/[0.06] px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:bg-white/[0.08] ${
+															showError
+																? "border-red-400/50 focus:border-red-400/70"
+																: "border-white/10 focus:border-white/20"
+														}`}
+														autoComplete="email"
+													/>
+													<button
+														type="submit"
+														className="cursor-pointer whitespace-nowrap rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#0a0811] hover:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed"
+														disabled={!field.state.value.trim() || field.state.meta.errors.length > 0}
+													>
+														Get verified
+													</button>
+												</div>
+												{showError && (
+													<p className="mt-2 text-xs text-red-400/80">
+														{field.state.meta.errors[0]}
+													</p>
+												)}
+											</div>
+										);
+									}}
+								</heroForm.Field>
 							</form>
 
 							<div className="mt-8 flex items-center gap-6 text-xs text-white/25">
