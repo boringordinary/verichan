@@ -27,6 +27,7 @@ class VerichanVerify {
   private verified: boolean = false;
   private errorMessage: string = "";
   private escapeHandler: ((e: KeyboardEvent) => void) | null = null;
+  private capturedFile: File | null = null;
 
   open(config: VerichanConfig) {
     if (!config?.sessionToken) {
@@ -41,6 +42,7 @@ class VerichanVerify {
     this.email = "";
     this.verified = false;
     this.errorMessage = "";
+    this.capturedFile = null;
 
     if (!this.host) {
       this.host = document.createElement("div");
@@ -100,6 +102,9 @@ class VerichanVerify {
               this.method = "upload";
               this.step = "capture";
               this.render();
+              break;
+            case "pick-file":
+              this.openFilePicker();
               break;
             case "submit":
               this.step = "processing";
@@ -210,10 +215,69 @@ class VerichanVerify {
     this.config.onError?.(message);
   }
 
+  private handleFile(file: File) {
+    const validTypes = ["image/jpeg", "image/png"];
+    if (!validTypes.includes(file.type)) {
+      this.showError("Only JPEG and PNG files are accepted.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      this.showError("File size exceeds 10 MB limit.");
+      return;
+    }
+    this.capturedFile = file;
+    // Show preview
+    const preview = this.overlay?.querySelector<HTMLElement>(".vc-upload-preview");
+    const dropZone = this.overlay?.querySelector<HTMLElement>(".vc-upload");
+    const img = this.overlay?.querySelector<HTMLImageElement>(".vc-upload-img");
+    const submitBtn = this.overlay?.querySelector<HTMLButtonElement>("[data-action='submit']");
+    if (preview && dropZone && img && submitBtn) {
+      const url = URL.createObjectURL(file);
+      img.onload = () => URL.revokeObjectURL(url);
+      img.src = url;
+      dropZone.style.display = "none";
+      preview.style.display = "block";
+      submitBtn.removeAttribute("disabled");
+    }
+  }
+
+  private openFilePicker() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/jpeg,image/png";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) this.handleFile(file);
+    };
+    input.click();
+  }
+
   private render() {
     if (!this.overlay) return;
 
     this.overlay.innerHTML = renderStep(this.step, this.method, this.email, this.errorMessage);
+
+    if (this.step === "capture" && this.method === "upload") {
+      const dropZone = this.overlay.querySelector<HTMLElement>(".vc-upload");
+      if (dropZone) {
+        dropZone.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          dropZone.style.borderColor = "var(--vc-accent-border)";
+          dropZone.style.background = "var(--vc-accent-soft)";
+        });
+        dropZone.addEventListener("dragleave", () => {
+          dropZone.style.borderColor = "";
+          dropZone.style.background = "";
+        });
+        dropZone.addEventListener("drop", (e) => {
+          e.preventDefault();
+          dropZone.style.borderColor = "";
+          dropZone.style.background = "";
+          const file = e.dataTransfer?.files[0];
+          if (file) this.handleFile(file);
+        });
+      }
+    }
   }
 }
 

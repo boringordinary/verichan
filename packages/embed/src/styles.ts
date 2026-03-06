@@ -540,6 +540,14 @@ export const css = /* css */ `
     font-size: 13px;
   }
 
+  .vc-upload-preview { margin-top: 24px; border-radius: 18px; border: 1px solid var(--vc-border); background: var(--vc-surface); overflow: hidden; text-align: center; }
+  .vc-upload-img { width: 100%; max-height: 300px; object-fit: contain; display: block; }
+  .vc-upload-change { display: block; width: 100%; padding: 10px; border: none; border-top: 1px solid var(--vc-border); background: transparent; color: var(--vc-text-2); font-size: 13px; cursor: pointer; }
+  .vc-upload-change:hover { background: var(--vc-surface-hover); color: var(--vc-text); }
+
+  .vc-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .vc-btn-primary:disabled:hover { background: var(--vc-accent); }
+
   /* ── Processing ── */
 
   .vc-processing {

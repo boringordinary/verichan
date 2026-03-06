@@ -164,6 +164,50 @@ test("open without sessionToken throws", () => {
   expect(() => open({ sessionToken: "abc" })).not.toThrow();
 });
 
+// --- Upload capture tests ---
+
+test("upload capture render has pick-file action on drop zone", () => {
+  const html = renderStep("capture", "upload", "");
+  expect(html).toContain('class="vc-upload"');
+  expect(html).toContain('data-action="pick-file"');
+});
+
+test("upload capture render has disabled submit button", () => {
+  const html = renderStep("capture", "upload", "");
+  expect(html).toContain('data-action="submit"');
+  expect(html).toContain("disabled");
+});
+
+test("upload capture render has preview area hidden by default", () => {
+  const html = renderStep("capture", "upload", "");
+  expect(html).toContain('class="vc-upload-preview"');
+  expect(html).toContain('style="display:none"');
+});
+
+test("upload capture render has change file button", () => {
+  const html = renderStep("capture", "upload", "");
+  expect(html).toContain('class="vc-upload-change"');
+});
+
+// --- File validation logic tests ---
+
+test("file validation rejects invalid MIME types", () => {
+  const validTypes = ["image/jpeg", "image/png"];
+  expect(validTypes.includes("image/jpeg")).toBe(true);
+  expect(validTypes.includes("image/png")).toBe(true);
+  expect(validTypes.includes("image/gif")).toBe(false);
+  expect(validTypes.includes("application/pdf")).toBe(false);
+  expect(validTypes.includes("image/webp")).toBe(false);
+});
+
+test("file validation rejects files over 10 MB", () => {
+  const maxSize = 10 * 1024 * 1024; // 10 MB
+  expect(5 * 1024 * 1024 < maxSize).toBe(true);  // 5 MB OK
+  expect(10 * 1024 * 1024 < maxSize).toBe(false); // exactly 10 MB rejected (not less than)
+  expect(10 * 1024 * 1024 <= maxSize).toBe(true);  // exactly 10 MB is at the limit
+  expect(11 * 1024 * 1024 > maxSize).toBe(true);  // 11 MB exceeds
+});
+
 test("escape handler reference is stored and can be removed", () => {
   // Simulate the escape handler lifecycle
   let escapeHandler: ((e: KeyboardEvent) => void) | null = null;

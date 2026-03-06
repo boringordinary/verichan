@@ -131,12 +131,16 @@ function captureBody(method: "selfie" | "upload"): string {
       ${stepDots(1)}
       <div class="vc-title">Upload your ID</div>
       <div class="vc-subtitle">Make sure all details are clearly visible.</div>
-      <div class="vc-upload" data-action="submit">
+      <div class="vc-upload" data-action="pick-file">
         ${imageIcon}
         <div class="vc-upload-title">Drag and drop or click to upload</div>
         <div class="vc-upload-hint">JPG or PNG, max 10 MB</div>
       </div>
-      <button class="vc-btn-primary" data-action="submit">Submit</button>
+      <div class="vc-upload-preview" style="display:none">
+        <img class="vc-upload-img" />
+        <button class="vc-upload-change" data-action="pick-file">Change file</button>
+      </div>
+      <button class="vc-btn-primary" data-action="submit" disabled>Submit</button>
     </div>`;
 }
 
