@@ -30,6 +30,8 @@ class VerichanVerify {
   private capturedFile: File | null = null;
   private mediaStream: MediaStream | null = null;
   private _sessionId: string | null = null;
+  private _isOpen: boolean = false;
+  private _errorOrigin: "session" | "verification" | null = null;
 
   open(config: VerichanConfig) {
     if (!config?.sessionToken) {
@@ -46,6 +48,8 @@ class VerichanVerify {
     this.errorMessage = "";
     this.capturedFile = null;
     this._sessionId = null;
+    this._isOpen = true;
+    this._errorOrigin = null;
 
     if (!this.host) {
       this.host = document.createElement("div");
@@ -113,6 +117,7 @@ class VerichanVerify {
               this.captureFrame();
               break;
             case "submit":
+              if (this.step === "processing") break;
               if (!this.capturedFile) {
                 this.showError("No image captured. Please try again.");
                 break;
@@ -122,9 +127,16 @@ class VerichanVerify {
               this.processVerification();
               break;
             case "retry":
-              this.step = "capture";
               this.errorMessage = "";
-              this.render();
+              if (this._errorOrigin === "session") {
+                this.step = "email";
+                this.render();
+                this.resolveSession();
+              } else {
+                this.step = "capture";
+                this.render();
+              }
+              this._errorOrigin = null;
               break;
             case "done":
               this.close();
@@ -166,6 +178,7 @@ class VerichanVerify {
   }
 
   close() {
+    this._isOpen = false;
     this.stopCamera();
     if (this.overlay) {
       this.overlay.setAttribute("aria-hidden", "true");
@@ -198,12 +211,13 @@ class VerichanVerify {
   private async resolveSession(): Promise<boolean> {
     try {
       const res = await fetch(`${this.apiBase}/v1/verify/${this.config.sessionToken}`);
+      if (!this._isOpen) return false;
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         if (res.status === 410) {
-          this.showError("This verification session has expired.");
+          this.showSessionError("This verification session has expired.");
         } else {
-          this.showError(data?.error?.message ?? "Could not load verification session.");
+          this.showSessionError(data?.error?.message ?? "Could not load verification session.");
         }
         return false;
       }
@@ -218,7 +232,8 @@ class VerichanVerify {
       this._sessionId = data.session_id;
       return true;
     } catch {
-      this.showError("Network error. Please check your connection and try again.");
+      if (!this._isOpen) return false;
+      this.showSessionError("Network error. Please check your connection and try again.");
       return false;
     }
   }
@@ -275,9 +290,9 @@ class VerichanVerify {
 
   private async processVerification() {
     const uploaded = await this.uploadFile();
-    if (!uploaded) return;
+    if (!uploaded || !this._isOpen) return;
     const submitted = await this.submitSession();
-    if (!submitted) return;
+    if (!submitted || !this._isOpen) return;
     this.step = "complete";
     this.verified = true;
     this.render();
@@ -310,11 +325,16 @@ class VerichanVerify {
     this.render();
   }
 
-  private showError(message: string) {
+  private showError(message: string, origin: "session" | "verification" = "verification") {
     this.step = "error";
     this.errorMessage = message;
+    this._errorOrigin = origin;
     this.render();
     this.config.onError?.(message);
+  }
+
+  private showSessionError(message: string) {
+    this.showError(message, "session");
   }
 
   private handleFile(file: File) {

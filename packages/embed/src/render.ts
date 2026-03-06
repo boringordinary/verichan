@@ -12,6 +12,10 @@ import {
 
 export type Step = "email" | "already-verified" | "method" | "capture" | "processing" | "complete" | "error";
 
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 const smallCheck = `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
 
 function stepDots(current: number): string {
@@ -42,7 +46,7 @@ function footer(): string {
 }
 
 function emailBody(email: string): string {
-  const escaped = email.replace(/"/g, "&quot;");
+  const escaped = escapeHtml(email);
   return `
     <div class="vc-body">
       <div class="vc-email-icon">${mailIcon}</div>
@@ -166,7 +170,7 @@ function errorBody(message: string): string {
       <div class="vc-error">
         <div class="vc-error-icon">${errorIcon}</div>
         <div class="vc-error-title">Something went wrong</div>
-        <div class="vc-error-text">${message}</div>
+        <div class="vc-error-text">${escapeHtml(message)}</div>
         <button class="vc-btn-primary" data-action="retry">Try again</button>
         <button class="vc-btn-ghost" data-action="close">Close</button>
       </div>
