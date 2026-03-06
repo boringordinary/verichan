@@ -96,8 +96,8 @@ class VerichanVerify {
               this.render();
               setTimeout(() => {
                 this.step = "complete";
-                this.render();
                 this.verified = true;
+                this.render();
                 this.config.onVerified?.();
               }, 2400);
               break;
@@ -117,13 +117,15 @@ class VerichanVerify {
         }
       });
 
-      // Close on Escape
+      document.body.appendChild(this.host);
+    }
+
+    // Register escape handler (re-register on each open since close() removes it)
+    if (!this.escapeHandler) {
       this.escapeHandler = (e: KeyboardEvent) => {
         if (e.key === "Escape" && this.step !== "processing") this.close();
       };
       document.addEventListener("keydown", this.escapeHandler);
-
-      document.body.appendChild(this.host);
     }
 
     this.render();
