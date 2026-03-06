@@ -5,7 +5,7 @@
   "main": "dist/verichan.js",
   "types": "src/index.ts",
   "scripts": {
-    "build": "bun build src/index.ts --outfile dist/verichan.js --minify",
-    "dev": "bun build src/index.ts --outfile dist/verichan.js --watch"
+    "build": "bun build src/index.ts --outfile dist/verichan.js --minify --target=browser",
+    "dev": "bun build src/index.ts --outfile dist/verichan.js --watch --target=browser"
   }
 }
