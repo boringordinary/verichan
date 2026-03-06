@@ -2,6 +2,10 @@ import { css } from "./styles";
 import { renderStep, type Step } from "./render";
 
 export interface VerichanConfig {
+  /** Session token from the API. Required. */
+  sessionToken: string;
+  /** Base URL for the Verichan API. Defaults to relative path. */
+  apiBaseUrl?: string;
   /** Callback when verification completes successfully */
   onVerified?: () => void;
   /** Callback when the user dismisses the modal */
@@ -16,7 +20,7 @@ class VerichanVerify {
   private shadow: ShadowRoot | null = null;
   private host: HTMLElement | null = null;
   private overlay: HTMLElement | null = null;
-  private config: VerichanConfig = {};
+  private config: VerichanConfig = {} as VerichanConfig;
   private step: Step = "email";
   private method: "selfie" | "upload" | null = null;
   private email: string = "";
@@ -24,12 +28,19 @@ class VerichanVerify {
   private errorMessage: string = "";
   private escapeHandler: ((e: KeyboardEvent) => void) | null = null;
 
-  open(config: VerichanConfig = {}) {
+  open(config: VerichanConfig) {
+    if (!config?.sessionToken) {
+      throw new Error(
+        "Verichan: sessionToken is required. Create a session via the API first.",
+      );
+    }
+
     this.config = config;
     this.step = "email";
     this.method = null;
     this.email = "";
     this.verified = false;
+    this.errorMessage = "";
 
     if (!this.host) {
       this.host = document.createElement("div");

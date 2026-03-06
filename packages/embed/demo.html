@@ -37,6 +37,7 @@
   <script>
     function openVerify() {
       Verichan.open({
+        sessionToken: 'demo-token',
         onVerified: () => console.log('verified!'),
         onCheckEmail: (email) => email === 'verified@test.com',
       });

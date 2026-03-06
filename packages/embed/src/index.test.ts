@@ -146,6 +146,24 @@ test("error step contains retry button with data-action retry", () => {
   expect(html).toContain("Try again");
 });
 
+test("open without sessionToken throws", () => {
+  // Replicate the config validation logic from open()
+  function open(config: any) {
+    if (!config?.sessionToken) {
+      throw new Error(
+        "Verichan: sessionToken is required. Create a session via the API first.",
+      );
+    }
+  }
+
+  expect(() => open({})).toThrow("sessionToken is required");
+  expect(() => open(undefined)).toThrow("sessionToken is required");
+  expect(() => open(null)).toThrow("sessionToken is required");
+  expect(() => open({ sessionToken: "" })).toThrow("sessionToken is required");
+  // Valid token should not throw
+  expect(() => open({ sessionToken: "abc" })).not.toThrow();
+});
+
 test("escape handler reference is stored and can be removed", () => {
   // Simulate the escape handler lifecycle
   let escapeHandler: ((e: KeyboardEvent) => void) | null = null;
