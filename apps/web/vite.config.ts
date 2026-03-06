@@ -36,6 +36,7 @@ export default defineConfig(({ mode }) => {
       dedupe: ["react", "react-dom"],
       alias: {
         "@": resolve(__dirname, "./src"),
+        "@verichan/embed": resolve(__dirname, "../../packages/embed/src/index.ts"),
       },
     },
     server: {
@@ -43,7 +44,11 @@ export default defineConfig(({ mode }) => {
       open: false,
       proxy: {
         "/api": {
-          target: "http://localhost:3000",
+          target: "http://localhost:1070",
+          changeOrigin: true,
+        },
+        "/v1": {
+          target: "http://localhost:1070",
           changeOrigin: true,
         },
       },

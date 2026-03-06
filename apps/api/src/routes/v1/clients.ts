@@ -7,6 +7,15 @@ import { hashApiKey } from "../../middleware/api-key-auth";
 
 // TODO: Add admin auth middleware when available
 
+const clientIdParams = t.Object({
+  clientId: t.String(),
+});
+
+const clientApiKeyParams = t.Object({
+  clientId: t.String(),
+  keyId: t.String(),
+});
+
 export const clientsRouter = new Elysia({ prefix: "/v1/clients" })
   // POST /v1/clients — Create client (organization)
   .post(
@@ -30,29 +39,45 @@ export const clientsRouter = new Elysia({ prefix: "/v1/clients" })
         name: t.String(),
         webhook_url: t.Optional(t.String()),
       }),
+      detail: {
+        summary: "Create client",
+        description: "Creates a client organization used to own verification sessions and API keys.",
+        tags: ["Clients"],
+      },
     },
   )
   // GET /v1/clients/:clientId — Get client by ID
-  .get("/:clientId", async ({ params, set }) => {
-    const [found] = await db
-      .select()
-      .from(organization)
-      .where(eq(organization.id, params.clientId))
-      .limit(1);
+  .get(
+    "/:clientId",
+    async ({ params, set }) => {
+      const [found] = await db
+        .select()
+        .from(organization)
+        .where(eq(organization.id, params.clientId))
+        .limit(1);
 
-    if (!found) {
-      set.status = 404;
+      if (!found) {
+        set.status = 404;
+        return {
+          success: false,
+          error: { code: "NOT_FOUND", message: "Client not found" },
+        };
+      }
+
       return {
-        success: false,
-        error: { code: "NOT_FOUND", message: "Client not found" },
+        success: true,
+        data: found,
       };
-    }
-
-    return {
-      success: true,
-      data: found,
-    };
-  })
+    },
+    {
+      params: clientIdParams,
+      detail: {
+        summary: "Get client",
+        description: "Returns a single client organization by its identifier.",
+        tags: ["Clients"],
+      },
+    },
+  )
   // POST /v1/clients/:clientId/api-keys — Generate API key pair
   .post(
     "/:clientId/api-keys",
@@ -104,6 +129,7 @@ export const clientsRouter = new Elysia({ prefix: "/v1/clients" })
       };
     },
     {
+      params: clientIdParams,
       body: t.Optional(
         t.Object({
           label: t.Optional(t.String()),
@@ -112,32 +138,48 @@ export const clientsRouter = new Elysia({ prefix: "/v1/clients" })
           ),
         }),
       ),
+      detail: {
+        summary: "Create API key",
+        description: "Generates a new API key for the client and returns the raw key once.",
+        tags: ["Clients"],
+      },
     },
   )
   // DELETE /v1/clients/:clientId/api-keys/:keyId — Soft revoke
-  .delete("/:clientId/api-keys/:keyId", async ({ params, set }) => {
-    // Verify key belongs to organization
-    const [found] = await db
-      .select()
-      .from(apiKey)
-      .where(eq(apiKey.id, params.keyId))
-      .limit(1);
+  .delete(
+    "/:clientId/api-keys/:keyId",
+    async ({ params, set }) => {
+      // Verify key belongs to organization
+      const [found] = await db
+        .select()
+        .from(apiKey)
+        .where(eq(apiKey.id, params.keyId))
+        .limit(1);
 
-    if (!found || found.organizationId !== params.clientId) {
-      set.status = 404;
+      if (!found || found.organizationId !== params.clientId) {
+        set.status = 404;
+        return {
+          success: false,
+          error: { code: "NOT_FOUND", message: "API key not found" },
+        };
+      }
+
+      await db
+        .update(apiKey)
+        .set({ isActive: false })
+        .where(eq(apiKey.id, params.keyId));
+
       return {
-        success: false,
-        error: { code: "NOT_FOUND", message: "API key not found" },
+        success: true,
+        data: { id: params.keyId, revoked: true },
       };
-    }
-
-    await db
-      .update(apiKey)
-      .set({ isActive: false })
-      .where(eq(apiKey.id, params.keyId));
-
-    return {
-      success: true,
-      data: { id: params.keyId, revoked: true },
-    };
-  });
+    },
+    {
+      params: clientApiKeyParams,
+      detail: {
+        summary: "Revoke API key",
+        description: "Soft-revokes an API key that belongs to the client.",
+        tags: ["Clients"],
+      },
+    },
+  );

@@ -6,6 +6,8 @@ export interface VerichanConfig {
   sessionToken: string;
   /** Base URL for the Verichan API. Defaults to relative path. */
   apiBaseUrl?: string;
+  /** Pre-fill the email and skip straight to verification. */
+  email?: string;
   /** Callback when verification completes successfully */
   onVerified?: () => void;
   /** Callback when the user dismisses the modal */
@@ -165,14 +167,25 @@ class VerichanVerify {
       document.addEventListener("keydown", this.escapeHandler);
     }
 
+    // If email was provided, pre-fill and skip to check
+    if (config.email) {
+      this.email = config.email;
+      this.step = "email"; // render email step briefly, then auto-advance
+    }
+
     this.render();
     this.overlay!.setAttribute("aria-hidden", "false");
 
-    // Focus the email input after render
-    requestAnimationFrame(() => {
-      const input = this.overlay?.querySelector<HTMLInputElement>('[data-input="email"]');
-      input?.focus();
-    });
+    if (config.email) {
+      // Auto-advance past email step
+      this.handleCheckEmail(config.email);
+    } else {
+      // Focus the email input after render
+      requestAnimationFrame(() => {
+        const input = this.overlay?.querySelector<HTMLInputElement>('[data-input="email"]');
+        input?.focus();
+      });
+    }
 
     this.resolveSession();
   }
@@ -209,6 +222,12 @@ class VerichanVerify {
   }
 
   private async resolveSession(): Promise<boolean> {
+    // Demo mode: skip API call entirely
+    if (this.config.sessionToken === "demo") {
+      this._sessionId = "demo";
+      return true;
+    }
+
     try {
       const res = await fetch(`${this.apiBase}/v1/verify/${this.config.sessionToken}`);
       if (!this._isOpen) return false;
@@ -289,6 +308,16 @@ class VerichanVerify {
   }
 
   private async processVerification() {
+    if (this._sessionId === "demo") {
+      await new Promise((r) => setTimeout(r, 1500));
+      if (!this._isOpen) return;
+      this.step = "complete";
+      this.verified = true;
+      this.render();
+      this.config.onVerified?.();
+      return;
+    }
+
     const uploaded = await this.uploadFile();
     if (!uploaded || !this._isOpen) return;
     const submitted = await this.submitSession();
@@ -299,12 +328,16 @@ class VerichanVerify {
     this.config.onVerified?.();
   }
 
-  private async handleCheckEmail() {
-    const input = this.overlay?.querySelector<HTMLInputElement>('[data-input="email"]');
-    if (!input) return;
-
-    const value = input.value.trim();
-    if (!value || !value.includes("@")) return;
+  private async handleCheckEmail(prefilled?: string) {
+    let value: string;
+    if (prefilled) {
+      value = prefilled;
+    } else {
+      const input = this.overlay?.querySelector<HTMLInputElement>('[data-input="email"]');
+      if (!input) return;
+      value = input.value.trim();
+      if (!value || !value.includes("@")) return;
+    }
 
     this.email = value;
 

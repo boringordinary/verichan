@@ -6,80 +6,105 @@ import { verificationSession } from "../../database/schema/verification";
 import { sessionStatusHistory } from "../../database/schema/audit";
 import { apiKeyAuth } from "../../middleware/api-key-auth";
 
+const reviewIdParams = t.Object({
+  reviewId: t.String(),
+});
+
 export const reviewsRouter = new Elysia({ prefix: "/v1/reviews" })
   .use(apiKeyAuth)
   // GET /v1/reviews — List pending reviews for this client
-  .get("/", async (ctx) => {
-    const clientId = (ctx as unknown as { clientId: string }).clientId;
+  .get(
+    "/",
+    async (ctx) => {
+      const clientId = (ctx as unknown as { clientId: string }).clientId;
 
-    const pendingReviews = await db
-      .select({
-        review: review,
-        session: verificationSession,
-      })
-      .from(review)
-      .innerJoin(
-        verificationSession,
-        eq(review.sessionId, verificationSession.id),
-      )
-      .where(
-        and(
-          eq(verificationSession.organizationId, clientId),
-          isNull(review.decision),
-        ),
-      )
-      .orderBy(desc(review.createdAt));
+      const pendingReviews = await db
+        .select({
+          review: review,
+          session: verificationSession,
+        })
+        .from(review)
+        .innerJoin(
+          verificationSession,
+          eq(review.sessionId, verificationSession.id),
+        )
+        .where(
+          and(
+            eq(verificationSession.organizationId, clientId),
+            isNull(review.decision),
+          ),
+        )
+        .orderBy(desc(review.createdAt));
 
-    return {
-      success: true,
-      data: pendingReviews,
-    };
-  })
-  // GET /v1/reviews/:reviewId — Get review detail with notes
-  .get("/:reviewId", async (ctx) => {
-    const { params, set } = ctx;
-    const clientId = (ctx as unknown as { clientId: string }).clientId;
-
-    const results = await db
-      .select({
-        review: review,
-        session: verificationSession,
-      })
-      .from(review)
-      .innerJoin(
-        verificationSession,
-        eq(review.sessionId, verificationSession.id),
-      )
-      .where(
-        and(
-          eq(review.id, params.reviewId),
-          eq(verificationSession.organizationId, clientId),
-        ),
-      )
-      .limit(1);
-
-    if (results.length === 0) {
-      set.status = 404;
       return {
-        success: false,
-        error: { code: "NOT_FOUND", message: "Review not found" },
+        success: true,
+        data: pendingReviews,
       };
-    }
-
-    const notes = await db
-      .select()
-      .from(reviewNote)
-      .where(eq(reviewNote.reviewId, params.reviewId))
-      .orderBy(desc(reviewNote.createdAt));
-
-    return {
-      success: true,
-      data: {
-        ...results[0],
-        notes,
+    },
+    {
+      detail: {
+        summary: "List pending reviews",
+        description: "Returns open manual reviews for the authenticated client.",
+        tags: ["Reviews"],
       },
-    };
-  })
+    },
+  )
+  // GET /v1/reviews/:reviewId — Get review detail with notes
+  .get(
+    "/:reviewId",
+    async (ctx) => {
+      const { params, set } = ctx;
+      const clientId = (ctx as unknown as { clientId: string }).clientId;
+
+      const results = await db
+        .select({
+          review: review,
+          session: verificationSession,
+        })
+        .from(review)
+        .innerJoin(
+          verificationSession,
+          eq(review.sessionId, verificationSession.id),
+        )
+        .where(
+          and(
+            eq(review.id, params.reviewId),
+            eq(verificationSession.organizationId, clientId),
+          ),
+        )
+        .limit(1);
+
+      if (results.length === 0) {
+        set.status = 404;
+        return {
+          success: false,
+          error: { code: "NOT_FOUND", message: "Review not found" },
+        };
+      }
+
+      const notes = await db
+        .select()
+        .from(reviewNote)
+        .where(eq(reviewNote.reviewId, params.reviewId))
+        .orderBy(desc(reviewNote.createdAt));
+
+      return {
+        success: true,
+        data: {
+          ...results[0],
+          notes,
+        },
+      };
+    },
+    {
+      params: reviewIdParams,
+      detail: {
+        summary: "Get review",
+        description: "Returns a single review and its attached notes.",
+        tags: ["Reviews"],
+      },
+    },
+  )
   // POST /v1/reviews/:reviewId/decision — Submit decision
   .post(
     "/:reviewId/decision",
@@ -168,6 +193,7 @@ export const reviewsRouter = new Elysia({ prefix: "/v1/reviews" })
       };
     },
     {
+      params: reviewIdParams,
       body: t.Object({
         decision: t.Union([
           t.Literal("approved"),
@@ -176,6 +202,11 @@ export const reviewsRouter = new Elysia({ prefix: "/v1/reviews" })
         ]),
         reason: t.Optional(t.String()),
       }),
+      detail: {
+        summary: "Submit review decision",
+        description: "Applies a manual review decision and updates the underlying verification session status.",
+        tags: ["Reviews"],
+      },
     },
   )
   // POST /v1/reviews/:reviewId/notes — Add note
@@ -228,10 +259,16 @@ export const reviewsRouter = new Elysia({ prefix: "/v1/reviews" })
       };
     },
     {
+      params: reviewIdParams,
       body: t.Object({
         content: t.String(),
         author_id: t.Optional(t.String()),
         is_client_visible: t.Optional(t.Boolean()),
       }),
+      detail: {
+        summary: "Add review note",
+        description: "Appends a note to an existing review.",
+        tags: ["Reviews"],
+      },
     },
   );

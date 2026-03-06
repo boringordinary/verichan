@@ -1,0 +1,403 @@
+@import "tailwindcss";
+@import "./theme.css";
+@plugin "@tailwindcss/typography";
+
+@variant dark (&:where(.dark, .dark *));
+
+/* Disable default behavior of scrollbar when React Aria select is open, as it conflicts with our app's shell */
+html {
+  padding-right: 0;
+  overflow-y: scroll;
+  /* We'll remove the global padding-bottom and handle it differently */
+  font-family: var(--font-ui), sans-serif;
+}
+
+/* Prevent body scroll lock styles from Ark UI and other libraries */
+body {
+  padding-right: 0;
+  overflow: visible;
+  /* Only allow overflow hidden when explicitly needed */
+}
+
+:focus {
+  outline: none;
+}
+
+/* Override any inline styles that libraries might add */
+body[style*="overflow"] {
+  overflow: visible;
+}
+
+body[style*="padding-right"] {
+  padding-right: 0;
+}
+
+/* Allow scroll lock only for specific dialogs/modals that need it */
+body.scroll-locked {
+  overflow: hidden;
+}
+
+/* Ensure body doesn't get position fixed applied */
+body[style*="position: fixed"] {
+  position: static;
+}
+
+/* Create a separate class for safe area handling that can be applied only to specific components that need it */
+.ios-safe-area-bottom {
+  padding-bottom: 0px;
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom));
+}
+
+/* Modern scrollbar styling with transparent track background */
+/* For Chrome, Safari, and newer Edge */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-light);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-surface-light);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--color-surface-dark);
+  background-clip: content-box;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-light) var(--color-background);
+}
+
+/* Hide scrollbars entirely when running as an installed PWA */
+.is-pwa,
+.is-pwa * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.is-pwa::-webkit-scrollbar,
+.is-pwa *::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Hide scrollbar during splash screen */
+.splash-active {
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.splash-active::-webkit-scrollbar {
+  display: none;
+}
+
+:root {
+  --z-overlay: 200;
+}
+
+/* Fix for timestamp popover positioning */
+.timestamp-popover {
+  z-index: 200;
+}
+
+/* Firefox doesn't support scrollbar thumb hover/active states with CSS variables */
+
+/* For Edge and IE - less support but still applicable */
+@supports (-ms-overflow-style: none) {
+  html {
+    -ms-overflow-style: auto;
+  }
+
+  * {
+    -ms-overflow-style: auto;
+  }
+}
+
+body {
+  font-family: var(--font-ui), sans-serif;
+}
+
+.font-ui {
+  font-family: var(--font-ui), sans-serif;
+}
+
+/* Ensure ul bullets are visible and themed */
+ul {
+  list-style-type: disc;
+  padding-left: 1.25em;
+}
+ol {
+  padding-left: 1.25em;
+}
+
+/* Animation for emoji markers */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Fade animation without scale */
+@keyframes fadeInOpacity {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Shimmer animation for progress bars */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* SVG dash rotation animation */
+@keyframes dash-rotate {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 48; /* This should be the sum of stroke-dasharray values (8 + 4) * 4 */
+  }
+}
+
+/* SVG dash rotation animation - reverse direction */
+@keyframes dash-rotate-reverse {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -48; /* Negative value for reverse direction */
+  }
+}
+
+/* Checkbox checkmark animation */
+@keyframes checkmark {
+  0% {
+    stroke-dashoffset: 14;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.animate-checkmark {
+  animation: checkmark 0.3s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+/* Ethereal glow pulse animation for miniplayer album art */
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 20px -4px rgba(var(--primary-rgb), 0.3);
+  }
+  50% {
+    box-shadow: 0 0 28px -2px rgba(var(--primary-rgb), 0.5);
+  }
+}
+
+/* Remove all focus styles from audio upload dropzone */
+.audio-upload-dropzone,
+.audio-upload-dropzone:focus,
+.audio-upload-dropzone:focus-visible,
+.audio-upload-dropzone:focus-within,
+.audio-upload-dropzone[data-focus],
+.audio-upload-dropzone[data-focus-visible],
+.audio-upload-dropzone[data-focused] {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Hide scrollbar utility class */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Style date input calendar icon to match text-foreground color */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  /* Use filter to make the icon match text color in dark theme */
+  filter: brightness(0) saturate(100%) invert(84%) sepia(0%) saturate(0%)
+    hue-rotate(93deg) brightness(104%) contrast(100%);
+  opacity: 0.7;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Firefox date input styling */
+input[type="date"]::-moz-calendar-picker-indicator {
+  filter: brightness(0) saturate(100%) invert(84%) sepia(0%) saturate(0%)
+    hue-rotate(93deg) brightness(104%) contrast(100%);
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+input[type="date"]::-moz-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Prevent overflow scrolling on mobile feed items */
+@media (max-width: 768px) {
+  /* Prevent horizontal scrolling on feed items */
+  [data-feed-item] {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    overflow-y: hidden;
+  }
+
+  /* Ensure touch events don't create scroll on nested elements */
+  [data-feed-item] * {
+    -webkit-overflow-scrolling: auto;
+    touch-action: pan-y;
+  }
+}
+
+/* Snowfall animation for December splash screen */
+@keyframes snowfall {
+  0% {
+    transform: translateY(-20px) translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(25vh) translateX(10px) rotate(45deg);
+  }
+  50% {
+    transform: translateY(50vh) translateX(-5px) rotate(90deg);
+  }
+  75% {
+    transform: translateY(75vh) translateX(15px) rotate(135deg);
+  }
+  100% {
+    transform: translateY(105vh) translateX(5px) rotate(180deg);
+    opacity: 0.6;
+  }
+}
+
+.animate-snowfall {
+  animation: snowfall linear infinite;
+  will-change: transform;
+}
+
+/* Star orbit animation - rotates the transparent corner around */
+@keyframes star-orbit {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-star-orbit {
+  animation: star-orbit 8s linear infinite;
+  transform-origin: center;
+}
+
+/* Animated gradient shift for pledge/support links */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-shift {
+  animation: gradient-shift 6s ease-in-out infinite;
+  background-size: 300% 300%;
+}
+
+/* Continuous one-direction gradient scroll (diagonal for slanted gradients)
+   NOTE: Named to avoid clobbering the membership/exclusives gradient-scroll keyframes in theme.css */
+@keyframes gradient-scroll-diagonal {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: -100% -100%;
+  }
+}
+
+/* Shimmer sweep for gradient buttons */
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+/* Pulsing glow for outer ring */
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.02);
+  }
+}
+
+/* Shadow color shift animation - violet dominant */
+@keyframes shadow-shift {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(139, 92, 246, 0.4),
+      0 0 40px rgba(139, 92, 246, 0.2),
+      0 10px 40px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(167, 139, 250, 0.4),
+      0 0 40px rgba(167, 139, 250, 0.2),
+      0 10px 40px rgba(167, 139, 250, 0.3);
+  }
+}

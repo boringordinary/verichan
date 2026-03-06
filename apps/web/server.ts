@@ -1,6 +1,6 @@
 import { serve } from "bun";
 
-const port = Bun.env.PORT ? parseInt(Bun.env.PORT) : 5173;
+const port = Bun.env.PORT ? parseInt(Bun.env.PORT) : 1069;
 const publicDir = "./dist";
 
 serve({

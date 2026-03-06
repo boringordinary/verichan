@@ -7,12 +7,14 @@
     "node": ">=20.0.0"
   },
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
-    "dev": "bunx --bun turbo run dev --filter=@verichan/api --filter=@verichan/web",
+    "dev": "bunx --bun turbo run dev --filter=@verichan/api --filter=@verichan/web --filter=@verichan/embed",
     "dev:api": "bunx --bun turbo run dev --filter=@verichan/api",
     "dev:web": "bunx --bun turbo run dev --filter=@verichan/web",
+    "email": "bun run --cwd apps/api email",
     "build": "bunx --bun turbo run build",
     "test": "bunx --bun turbo run test",
     "typecheck": "bunx --bun turbo run typecheck",

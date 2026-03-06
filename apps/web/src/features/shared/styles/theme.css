@@ -1,0 +1,591 @@
+/* Use local Inter fonts as "Ordinary" */
+@font-face {
+	font-family: "Ordinary";
+	src: url("/fonts/ordinary/static/Ordinary-Regular.ttf") format("truetype");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: "Ordinary";
+	src: url("/fonts/ordinary/static/Ordinary-Medium.ttf") format("truetype");
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: "Ordinary";
+	src: url("/fonts/ordinary/static/Ordinary-SemiBold.ttf") format("truetype");
+	font-weight: 600;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: "Ordinary";
+	src: url("/fonts/ordinary/static/Ordinary-Bold.ttf") format("truetype");
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
+/* This is Tailwind V4's way of defining custom properties.
+All CSS variables will be generated here, so --navbar-height will be generated as navbar-height in utility classes */
+
+@theme {
+	/* ==========================================================================
+	   CORE PALETTE
+	   ========================================================================== */
+
+	/* Primary Colors — centered on #b991ff */
+	--color-primary-lighter: oklch(0.85 0.12 293 / 1);
+	--color-primary-light: oklch(0.78 0.16 293 / 1);
+	--color-primary: oklch(0.72 0.18 293 / 1);
+	--color-primary-dark: oklch(0.62 0.20 293 / 1);
+	--color-primary-darker: oklch(0.52 0.22 293 / 1);
+
+	/* Secondary Colors */
+	--color-secondary-lighter: oklch(0.94 0.04 306.42 / 1);
+	--color-secondary-light: oklch(0.80 0.13 309.09 / 1);
+	--color-secondary: oklch(0.64 0.24 306 / 1);
+	--color-secondary-dark: oklch(0.55 0.29 298.31 / 1);
+	--color-secondary-darker: oklch(0.48 0.27 289.29 / 1);
+
+	/* Accent Colors */
+	--color-accent-lighter: oklch(0.78 0.22 320 / 1);
+	--color-accent-light: oklch(0.70 0.26 320 / 1);
+	--color-accent: oklch(0.62 0.30 320 / 1);
+	--color-accent-dark: oklch(0.54 0.32 320 / 1);
+	--color-accent-darker: oklch(0.46 0.34 320 / 1);
+
+	/* Danger Colors */
+	--color-danger-lighter: oklch(0.93 0.04 28.04 / 1);
+	--color-danger-light: oklch(0.76 0.14 27.62 / 1);
+	--color-danger: oklch(0.57 0.22 30 / 1);
+	--color-danger-dark: oklch(0.43 0.16 29.96 / 1);
+	--color-danger-darker: oklch(0.29 0.1 30.15 / 1);
+
+	/* Success Colors */
+	--color-success-lighter: oklch(0.93 0.07 134.5 / 1); /* lighter #9cd11f */
+	--color-success-light: oklch(0.85 0.15 134.5 / 1); /* light #9cd11f */
+	--color-success: oklch(0.77 0.19 134.5 / 1); /* #9cd11f */
+	--color-success-dark: oklch(0.65 0.17 134.5 / 1); /* dark #9cd11f */
+	--color-success-darker: oklch(0.53 0.13 134.5 / 1); /* darker #9cd11f */
+
+	/* Warning Colors - Yellow/Orange tones */
+	--color-warning-lighter: oklch(0.93 0.06 85 / 1);
+	--color-warning-light: oklch(0.85 0.14 85 / 1);
+	--color-warning: oklch(0.75 0.18 85 / 1); /* Yellow/orange warning color */
+	--color-warning-dark: oklch(0.65 0.16 85 / 1);
+	--color-warning-darker: oklch(0.55 0.14 85 / 1);
+
+	/* Info Colors - Blue tones */
+	--color-info-lighter: oklch(0.93 0.04 240 / 1);
+	--color-info-light: oklch(0.85 0.08 240 / 1);
+	--color-info: oklch(0.7 0.15 240 / 1); /* Blue info color */
+	--color-info-dark: oklch(0.55 0.13 240 / 1);
+	--color-info-darker: oklch(0.4 0.1 240 / 1);
+
+	/* Waveform Colors */
+	--color-waveform: oklch(0.6 0.26 310 / 1);
+	--color-waveform-progress: oklch(0.55 0.3 305 / 1);
+	--color-waveform-unplayed: oklch(0.3 0.05 306 / 1);
+
+	/* Logo Color */
+	--color-logo: #ffffff;
+
+	/* ==========================================================================
+	   BRAND COLORS (Third-party integrations)
+	   ========================================================================== */
+	--color-patreon-red: #ff424d;
+	--color-patreon-orange: #ff7b29;
+	--color-patreon-navy: #052d49;
+
+	/* Fonts */
+	--font-ui: "Ordinary", sans-serif;
+	--font-sans: var(--font-ui);
+
+	/* ==========================================================================
+	   LAYOUT
+	   ========================================================================== */
+	--navbar-height: 3.5rem; /* Base navbar height (56px), changes at sm breakpoint */
+	--banner-height: 0px;    /* Optional announcement banner */
+	--header-height: calc(var(--navbar-height) + var(--banner-height));
+	--sidebar-width: 16rem;  /* 256px = w-64 in Tailwind */
+
+	/* Surfaces */
+	--color-surface-lighter: oklch(0.18 0.03 300 / 1);
+	--color-surface-light: oklch(0.15 0.03 300 / 1);
+	--color-surface: oklch(0.13 0.03 300 / 1);
+	--color-surface-dark: oklch(0.11 0.03 300 / 1);
+	--color-surface-darker: oklch(0.09 0.03 300 / 1);
+
+	/* Background & Foreground */
+	--color-background: #100d18;
+	--color-foreground: oklch(0.85 0.02 300 / 1);
+	--color-muted-foreground: oklch(0.62 0.025 300 / 1);
+
+	/* Borders */
+	--color-border: oklch(0.19 0.03 300 / 1);
+	--color-border-light: oklch(0.24 0.03 300 / 1);
+
+	/* ==========================================================================
+	   PREMIUM THEME (Pledge/Support Pages)
+	   Cool tones: cyan → sky → violet
+	   ========================================================================== */
+	--color-premium-cyan-500: #06b6d4;
+	--color-premium-cyan-400: #22d3ee;
+	--color-premium-cyan-300: #67e8f9;
+	--color-premium-cyan-200: #a5f3fc;
+	--color-premium-sky-500: #0ea5e9;
+	--color-premium-sky-400: #38bdf8;
+	--color-premium-violet-500: #8b5cf6;
+	--color-premium-violet-400: #a78bfa;
+	--color-premium-violet-300: #c4b5fd;
+	--color-premium-emerald-500: #10b981;
+	--color-premium-emerald-400: #34d399;
+
+	/* Premium semantic colors - CHANGE THESE to update the whole theme */
+	--color-premium-emphasis: var(--color-premium-cyan-300);      /* Primary text emphasis */
+	--color-premium-highlight: var(--color-premium-violet-300);   /* Secondary highlights, features */
+	--color-premium-accent: var(--color-premium-cyan-400);        /* CTAs, interactive elements */
+	--color-premium-muted: var(--color-premium-cyan-200);         /* Subtle, de-emphasized */
+	--color-premium-icon: var(--color-premium-cyan-400);          /* Icon colors */
+	--color-premium-icon-secondary: var(--color-premium-violet-400); /* Secondary icons */
+	--color-premium-card-accent: var(--color-premium-violet-400); /* Card accent colors */
+
+	/* ==========================================================================
+	   AUDIO ETHICS THEME (About Page)
+	   Warm tones: purple → fuchsia → pink
+	   ========================================================================== */
+	--color-ethics-purple-500: #a855f7;
+	--color-ethics-purple-400: #c084fc;
+	--color-ethics-purple-300: #d8b4fe;
+	--color-ethics-purple-200: #e9d5ff;
+	--color-ethics-fuchsia-500: #d946ef;
+	--color-ethics-fuchsia-400: #e879f9;
+	--color-ethics-pink-500: #ec4899;
+	--color-ethics-pink-400: #f472b6;
+	--color-ethics-pink-300: #f9a8d4;
+	--color-ethics-orange-400: #fb923c;
+	--color-ethics-orange-300: #fdba74;
+
+	/* Audio Ethics semantic colors - CHANGE THESE to update the whole theme */
+	--color-ethics-emphasis: var(--color-ethics-purple-400);    /* Primary text emphasis */
+	--color-ethics-highlight: var(--color-ethics-fuchsia-400);  /* Secondary highlights */
+	--color-ethics-accent: var(--color-ethics-pink-400);        /* CTAs, interactive */
+	--color-ethics-icon: var(--color-ethics-purple-400);        /* Icon colors */
+
+	/* Radius */
+	--radius-pane: var(--radius-none);
+	--radius-input: var(--radius-lg); /* rounded-lg by default */
+
+	/* Underline */
+	--underline-thickness: 1px;
+	--underline-offset: 2px;
+
+	/* Layout */
+	--bottom-bar-height: 3.5rem; /* h-14 = 56px = 3.5rem */
+	--miniplayer-height: 5rem; /* Default miniplayer height (~80px), updated dynamically */
+
+	/* Theme-aware shadow colors - for dark themes */
+	/* Default shadow colors for dark backgrounds */
+	--shadow-color: oklch(0 0 0 / 0.1);
+	--shadow-color-md: oklch(0 0 0 / 0.15);
+	--shadow-color-lg: oklch(0 0 0 / 0.2);
+	--shadow-color-xl: oklch(0 0 0 / 0.25);
+
+	/* Custom shadow utilities using theme colors */
+	--shadow-sm: 0 1px 2px 0 var(--shadow-color);
+	--shadow: 0 1px 3px 0 var(--shadow-color), 0 1px 2px -1px var(--shadow-color);
+	--shadow-md:
+		0 4px 6px -1px var(--shadow-color-md), 0 2px 4px -2px var(--shadow-color);
+	--shadow-lg:
+		0 10px 15px -3px var(--shadow-color-lg), 0 4px 6px -4px
+		var(--shadow-color-md);
+	--shadow-xl:
+		0 20px 25px -5px var(--shadow-color-xl), 0 8px 10px -6px
+		var(--shadow-color-lg);
+	--shadow-2xl: 0 25px 50px -12px var(--shadow-color-xl);
+	--shadow-3xl: 0 35px 60px -15px var(--shadow-color-xl);
+	--shadow-inner: inset 0 2px 4px 0 var(--shadow-color);
+	--shadow-none: 0 0 #0000;
+
+	/* Complex shadows for specific components */
+	--shadow-navbar:
+		0 8px 32px -4px var(--shadow-color-lg), 0 4px 16px -2px
+		var(--shadow-color-md);
+	--shadow-miniplayer:
+		0 -8px 32px -4px var(--shadow-color-lg), 0 -4px 16px -2px
+		var(--shadow-color-md);
+	--shadow-overlay:
+		0 16px 48px -4px var(--shadow-color-xl), 0 8px 24px -2px
+		var(--shadow-color-lg);
+	--shadow-overlay-sm:
+		0 8px 32px -4px var(--shadow-color-lg), 0 4px 16px -2px
+		var(--shadow-color-md);
+}
+
+/* Custom underline styles */
+.decoration-dotted {
+	text-decoration-thickness: var(--underline-thickness);
+	text-underline-offset: var(--underline-offset);
+}
+
+@keyframes tooltipFadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(1px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+@keyframes tooltipFadeOut {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	to {
+		opacity: 0;
+		transform: translateY(1px);
+	}
+}
+
+@keyframes menuFadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(-4px) scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+@keyframes menuFadeOut {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	to {
+		opacity: 0.5;
+		transform: translateY(1px);
+	}
+}
+
+@keyframes searchingStripes {
+	0% {
+		background-position: 0 0;
+	}
+	100% {
+		background-position: 20px 0;
+	}
+}
+
+@keyframes textScramble {
+	0% {
+		opacity: 0;
+		filter: blur(3px);
+		transform: translateY(2px);
+	}
+	50% {
+		opacity: 1;
+		filter: blur(1px);
+	}
+	100% {
+		opacity: 1;
+		filter: blur(0);
+		transform: translateY(0);
+	}
+}
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+/* Gradient text utilities based on prominence */
+
+/*
+ * Color Reference:
+ * Primary: gray → deep purple → deep pink (sophisticated, premium)
+ * Secondary: violet → purple (softer, supportive)
+ * Tertiary: purple → violet (creative, artistic)
+ * Accent: pink → purple → pink (vibrant, CTAs)
+ * Muted: gray → gray (serious, cautionary)
+ */
+
+/* Primary gradient - Highest prominence, main titles */
+.text-gradient-primary {
+	background: linear-gradient(to right, #111827, #581c87, #831843);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.dark .text-gradient-primary {
+	background: linear-gradient(to right, #f3f4f6, #e9d5ff, #fbcfe8);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+.text-gradient-primary-animated {
+	background: linear-gradient(to right, #111827, #581c87, #831843);
+	background-size: 200% 200%;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	animation: gradient-shift 6s ease-in-out infinite;
+}
+
+.dark .text-gradient-primary-animated {
+	background: linear-gradient(to right, #f3f4f6, #e9d5ff, #fbcfe8);
+	background-size: 200% 200%;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	animation: gradient-shift 6s ease-in-out infinite;
+}
+
+/* Secondary gradient - Second level prominence */
+.text-gradient-secondary {
+	background: linear-gradient(to right, #7c3aed, #a855f7);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.dark .text-gradient-secondary {
+	background: linear-gradient(to right, #a78bfa, #c084fc);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+/* Tertiary gradient - Third level prominence */
+.text-gradient-tertiary {
+	background: linear-gradient(to right, #9333ea, #7c3aed);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.dark .text-gradient-tertiary {
+	background: linear-gradient(to right, #c084fc, #a78bfa);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+/* Accent gradient - Special emphasis, CTAs */
+.text-gradient-accent {
+	background: linear-gradient(to right, #ec4899, #a855f7, #ec4899);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.dark .text-gradient-accent {
+	background: linear-gradient(to right, #f9a8d4, #d8b4fe, #f9a8d4);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+/* Accent alt gradient - Alternative accent for variety */
+.text-gradient-accent-alt {
+	background: linear-gradient(to right, #db2777, #9333ea, #7c3aed);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.dark .text-gradient-accent-alt {
+	background: linear-gradient(to right, #f472b6, #c084fc, #a78bfa);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+/* Muted gradient - For less prominent, serious content */
+.text-gradient-muted {
+	background: linear-gradient(to right, #111827, #4b5563);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.dark .text-gradient-muted {
+	background: linear-gradient(to right, #f3f4f6, #9ca3af);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+/* Subtle gradient - Very soft emphasis */
+.text-gradient-subtle {
+	background: linear-gradient(to bottom right, #c084fc, #f472b6, #a78bfa);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	opacity: 0.9;
+}
+
+.dark .text-gradient-subtle {
+	background: linear-gradient(to bottom right, #d8b4fe, #fda4af, #c4b5fd);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	opacity: 0.9;
+}
+
+/* Animated gradient - For special interactive states */
+@keyframes gradient-shift {
+	0%, 100% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+}
+
+@keyframes gradient-scroll {
+	0% {
+		background-position: 0% 0%;
+	}
+	100% {
+		background-position: -200% 0%;
+	}
+}
+
+@keyframes gradient-scroll-overlay {
+	0% {
+		background-position: 0% 0%, 0% 0%;
+	}
+	100% {
+		background-position: 0% 0%, -200% 0%;
+	}
+}
+
+@property --x {
+	syntax: '<percentage>';
+	inherits: false;
+	initial-value: 0%;
+}
+
+@keyframes radial-scroll {
+	0% {
+		--x: -20%;
+	}
+	100% {
+		--x: 120%;
+	}
+}
+
+.text-gradient-animated {
+	background: linear-gradient(270deg, #9333ea, #db2777, #9333ea);
+	background-size: 200% 200%;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	animation: gradient-shift 3s ease infinite;
+}
+
+.dark .text-gradient-animated {
+	background: linear-gradient(270deg, #c084fc, #f472b6, #c084fc);
+	background-size: 200% 200%;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	animation: gradient-shift 3s ease infinite;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+	.animate-text-scramble {
+		animation: none;
+		opacity: 1;
+		filter: none;
+		transform: none;
+	}
+	.text-gradient-animated {
+		animation: none;
+	}
+	.text-gradient-primary-animated {
+		animation: none;
+	}
+	.text-gradient-premium {
+		animation: none;
+	}
+}
+
+/* ==========================================================================
+   PREMIUM GRADIENT UTILITIES
+   ========================================================================== */
+
+/* Premium animated gradient text - for headers/CTAs */
+.text-gradient-premium {
+	background: linear-gradient(
+		135deg,
+		var(--color-premium-cyan-500),
+		var(--color-premium-cyan-400),
+		var(--color-premium-sky-500),
+		var(--color-premium-violet-500),
+		var(--color-premium-violet-400),
+		var(--color-premium-cyan-500)
+	);
+	background-size: 300% 300%;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	animation: gradient-shift 6s ease-in-out infinite;
+}
+
+/* Premium static gradient (no animation) */
+.text-gradient-premium-static {
+	background: linear-gradient(
+		135deg,
+		var(--color-premium-cyan-500),
+		var(--color-premium-sky-500),
+		var(--color-premium-violet-500)
+	);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+/* Premium background gradient for cards/sections */
+.bg-gradient-premium {
+	background: linear-gradient(
+		135deg,
+		var(--color-premium-cyan-500),
+		var(--color-premium-sky-500),
+		var(--color-premium-violet-500)
+	);
+}
+
+/* Premium conic gradient for glow effects */
+.bg-gradient-premium-conic {
+	background: conic-gradient(
+		from 180deg,
+		color-mix(in srgb, var(--color-premium-cyan-500) 30%, transparent),
+		color-mix(in srgb, var(--color-premium-sky-500) 25%, transparent),
+		color-mix(in srgb, var(--color-premium-violet-500) 20%, transparent),
+		color-mix(in srgb, var(--color-premium-violet-400) 15%, transparent),
+		color-mix(in srgb, var(--color-premium-cyan-500) 30%, transparent)
+	);
+}
+
+/* Responsive navbar height */
+@media (min-width: 640px) {
+	:root {
+		--navbar-height: 4rem; /* 64px for sm and up, --header-height auto-updates via calc() */
+	}
+}

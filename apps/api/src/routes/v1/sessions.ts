@@ -40,6 +40,10 @@ function getStepsForServiceTier(
   return [{ type: "selfie", sortOrder: 0 }];
 }
 
+const sessionIdParams = t.Object({
+  sessionId: t.String(),
+});
+
 export const sessionsRouter = new Elysia({ prefix: "/v1/sessions" })
   .use(apiKeyAuth)
   // POST /v1/sessions — Create session
@@ -114,7 +118,14 @@ export const sessionsRouter = new Elysia({ prefix: "/v1/sessions" })
         },
       };
     },
-    { body: CreateSessionSchema },
+    {
+      body: CreateSessionSchema,
+      detail: {
+        summary: "Create verification session",
+        description: "Creates a verification session and provisions the required verification steps.",
+        tags: ["Sessions"],
+      },
+    },
   )
   // GET /v1/sessions — List sessions (paginated)
   .get(
@@ -145,77 +156,104 @@ export const sessionsRouter = new Elysia({ prefix: "/v1/sessions" })
         limit: t.Optional(t.Numeric()),
         offset: t.Optional(t.Numeric()),
       }),
+      detail: {
+        summary: "List verification sessions",
+        description: "Lists verification sessions for the authenticated client.",
+        tags: ["Sessions"],
+      },
     },
   )
   // GET /v1/sessions/:sessionId — Get session detail
-  .get("/:sessionId", async (ctx) => {
-    const { params, set } = ctx;
-    const clientId = (ctx as unknown as { clientId: string }).clientId;
+  .get(
+    "/:sessionId",
+    async (ctx) => {
+      const { params, set } = ctx;
+      const clientId = (ctx as unknown as { clientId: string }).clientId;
 
-    const [session] = await db
-      .select()
-      .from(verificationSession)
-      .where(
-        and(
-          eq(verificationSession.id, params.sessionId),
-          eq(verificationSession.organizationId, clientId),
-        ),
-      )
-      .limit(1);
+      const [session] = await db
+        .select()
+        .from(verificationSession)
+        .where(
+          and(
+            eq(verificationSession.id, params.sessionId),
+            eq(verificationSession.organizationId, clientId),
+          ),
+        )
+        .limit(1);
 
-    if (!session) {
-      set.status = 404;
-      return {
-        success: false,
-        error: { code: "NOT_FOUND", message: "Session not found" },
-      };
-    }
+      if (!session) {
+        set.status = 404;
+        return {
+          success: false,
+          error: { code: "NOT_FOUND", message: "Session not found" },
+        };
+      }
 
-    return { success: true, data: session };
-  })
+      return { success: true, data: session };
+    },
+    {
+      params: sessionIdParams,
+      detail: {
+        summary: "Get verification session",
+        description: "Returns a single verification session owned by the authenticated client.",
+        tags: ["Sessions"],
+      },
+    },
+  )
   // GET /v1/sessions/:sessionId/result — Get result
-  .get("/:sessionId/result", async (ctx) => {
-    const { params, set } = ctx;
-    const clientId = (ctx as unknown as { clientId: string }).clientId;
+  .get(
+    "/:sessionId/result",
+    async (ctx) => {
+      const { params, set } = ctx;
+      const clientId = (ctx as unknown as { clientId: string }).clientId;
 
-    const [session] = await db
-      .select()
-      .from(verificationSession)
-      .where(
-        and(
-          eq(verificationSession.id, params.sessionId),
-          eq(verificationSession.organizationId, clientId),
-        ),
-      )
-      .limit(1);
+      const [session] = await db
+        .select()
+        .from(verificationSession)
+        .where(
+          and(
+            eq(verificationSession.id, params.sessionId),
+            eq(verificationSession.organizationId, clientId),
+          ),
+        )
+        .limit(1);
 
-    if (!session) {
-      set.status = 404;
+      if (!session) {
+        set.status = 404;
+        return {
+          success: false,
+          error: { code: "NOT_FOUND", message: "Session not found" },
+        };
+      }
+
+      const terminalStatuses = ["approved", "rejected", "needs_resubmission"];
+      if (!terminalStatuses.includes(session.status)) {
+        set.status = 422;
+        return {
+          success: false,
+          error: {
+            code: "NOT_COMPLETE",
+            message: "Session has not been completed yet",
+          },
+        };
+      }
+
       return {
-        success: false,
-        error: { code: "NOT_FOUND", message: "Session not found" },
-      };
-    }
-
-    const terminalStatuses = ["approved", "rejected", "needs_resubmission"];
-    if (!terminalStatuses.includes(session.status)) {
-      set.status = 422;
-      return {
-        success: false,
-        error: {
-          code: "NOT_COMPLETE",
-          message: "Session has not been completed yet",
+        success: true,
+        data: {
+          session_id: session.id,
+          status: session.status,
+          result_data: session.resultData,
+          completed_at: session.completedAt?.toISOString() ?? null,
         },
       };
-    }
-
-    return {
-      success: true,
-      data: {
-        session_id: session.id,
-        status: session.status,
-        result_data: session.resultData,
-        completed_at: session.completedAt?.toISOString() ?? null,
+    },
+    {
+      params: sessionIdParams,
+      detail: {
+        summary: "Get session result",
+        description: "Returns the completed verification result for a session once it has reached a terminal state.",
+        tags: ["Sessions"],
       },
-    };
-  });
+    },
+  );

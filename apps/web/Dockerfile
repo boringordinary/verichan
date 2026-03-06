@@ -35,6 +35,15 @@ RUN doppler run --no-fallback -- bunx vitest run
 # Build with Vite
 RUN doppler run --no-fallback -- bunx --bun vite build
 
+# Compile static server to binary
+RUN bun build \
+    --compile \
+    --minify-whitespace \
+    --minify-syntax \
+    --target bun \
+    --outfile server \
+    ./server.ts
+
 # ============================================================================
 # Runner: Minimal static server
 # ============================================================================
@@ -48,22 +57,19 @@ RUN addgroup -g 1001 -S nodejs && \
 # Copy built static files
 COPY --from=builder --chown=nodejs:nodejs /app/apps/web/dist ./dist
 
-# Copy server and scripts
-COPY --from=builder --chown=nodejs:nodejs /app/apps/web/server.ts ./server.ts
-COPY --from=builder --chown=nodejs:nodejs /app/apps/web/package.json ./package.json
-COPY --from=builder --chown=nodejs:nodejs /app/apps/web/scripts ./scripts
-RUN chmod +x ./scripts/docker-entrypoint.sh
+# Copy compiled server binary
+COPY --from=builder --chown=nodejs:nodejs /app/apps/web/server ./server
 
 # Runtime config
 ARG DOPPLER_TOKEN
 ENV DOPPLER_TOKEN=${DOPPLER_TOKEN} \
     NODE_ENV=production \
-    PORT=5173
+    PORT=1069
 
 USER nodejs
-EXPOSE 5173
+EXPOSE 1069
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:5173/ || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:1069/ || exit 1
 
-CMD ["doppler", "run", "--no-fallback", "--", "/app/scripts/docker-entrypoint.sh"]
+CMD ["doppler", "run", "--no-fallback", "--", "./server"]

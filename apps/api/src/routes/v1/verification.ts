@@ -30,41 +30,56 @@ function validateFile(file: File): { valid: boolean; error?: string } {
   return { valid: true };
 }
 
+const sessionIdParams = t.Object({
+  sessionId: t.String(),
+});
+
 export const verificationRouter = new Elysia({ prefix: "/v1/sessions" })
   .use(sessionTokenAuth)
   // POST /v1/sessions/:sessionId/liveness-session — Create AWS liveness session
-  .post("/:sessionId/liveness-session", async (ctx) => {
-    const { set } = ctx;
-    const session = (ctx as unknown as { session: Session }).session;
+  .post(
+    "/:sessionId/liveness-session",
+    async (ctx) => {
+      const { set } = ctx;
+      const session = (ctx as unknown as { session: Session }).session;
 
-    if (session.status !== "created" && session.status !== "in_progress") {
-      set.status = 422;
+      if (session.status !== "created" && session.status !== "in_progress") {
+        set.status = 422;
+        return {
+          success: false,
+          error: {
+            code: "INVALID_STATUS",
+            message: "Session is not in a valid state for liveness check",
+          },
+        };
+      }
+
+      const result = await rekognitionClient.send(
+        new CreateFaceLivenessSessionCommand({}),
+      );
+
+      // Update session status to in_progress if it was created
+      if (session.status === "created") {
+        await db
+          .update(verificationSession)
+          .set({ status: "in_progress" })
+          .where(eq(verificationSession.id, session.id));
+      }
+
       return {
-        success: false,
-        error: {
-          code: "INVALID_STATUS",
-          message: "Session is not in a valid state for liveness check",
-        },
+        success: true,
+        data: { liveness_session_id: result.SessionId },
       };
-    }
-
-    const result = await rekognitionClient.send(
-      new CreateFaceLivenessSessionCommand({}),
-    );
-
-    // Update session status to in_progress if it was created
-    if (session.status === "created") {
-      await db
-        .update(verificationSession)
-        .set({ status: "in_progress" })
-        .where(eq(verificationSession.id, session.id));
-    }
-
-    return {
-      success: true,
-      data: { liveness_session_id: result.SessionId },
-    };
-  })
+    },
+    {
+      params: sessionIdParams,
+      detail: {
+        summary: "Create liveness session",
+        description: "Starts an AWS Rekognition liveness session for the verification flow.",
+        tags: ["Verification"],
+      },
+    },
+  )
   // POST /v1/sessions/:sessionId/documents — Upload document
   .post(
     "/:sessionId/documents",
@@ -146,6 +161,7 @@ export const verificationRouter = new Elysia({ prefix: "/v1/sessions" })
       };
     },
     {
+      params: sessionIdParams,
       body: t.Object({
         document_type: t.Union([
           t.Literal("passport"),
@@ -157,6 +173,11 @@ export const verificationRouter = new Elysia({ prefix: "/v1/sessions" })
         side: t.Union([t.Literal("front"), t.Literal("back")]),
         file: t.File(),
       }),
+      detail: {
+        summary: "Upload document",
+        description: "Uploads a verification document image for the current session.",
+        tags: ["Verification"],
+      },
     },
   )
   // POST /v1/sessions/:sessionId/selfie — Upload selfie
@@ -234,43 +255,60 @@ export const verificationRouter = new Elysia({ prefix: "/v1/sessions" })
       };
     },
     {
+      params: sessionIdParams,
       body: t.Object({
         file: t.File(),
       }),
+      detail: {
+        summary: "Upload selfie",
+        description: "Uploads the selfie image required for the current verification session.",
+        tags: ["Verification"],
+      },
     },
   )
   // POST /v1/sessions/:sessionId/submit — Submit for processing
-  .post("/:sessionId/submit", async (ctx) => {
-    const { set } = ctx;
-    const session = (ctx as unknown as { session: Session }).session;
+  .post(
+    "/:sessionId/submit",
+    async (ctx) => {
+      const { set } = ctx;
+      const session = (ctx as unknown as { session: Session }).session;
 
-    if (session.status !== "in_progress") {
-      set.status = 422;
+      if (session.status !== "in_progress") {
+        set.status = 422;
+        return {
+          success: false,
+          error: {
+            code: "INVALID_STATUS",
+            message: "Session must be in progress to submit",
+          },
+        };
+      }
+
+      // Update to submitted
+      await db
+        .update(verificationSession)
+        .set({ status: "submitted", submittedAt: new Date() })
+        .where(eq(verificationSession.id, session.id));
+
+      // Trigger pipeline async
+      const { runPipeline } = await import(
+        "../../services/verification/pipeline"
+      );
+      runPipeline(session.id).catch((err: unknown) => {
+        console.error(`Pipeline error for session ${session.id}:`, err);
+      });
+
       return {
-        success: false,
-        error: {
-          code: "INVALID_STATUS",
-          message: "Session must be in progress to submit",
-        },
+        success: true,
+        data: { session_id: session.id, status: "submitted" as const },
       };
-    }
-
-    // Update to submitted
-    await db
-      .update(verificationSession)
-      .set({ status: "submitted", submittedAt: new Date() })
-      .where(eq(verificationSession.id, session.id));
-
-    // Trigger pipeline async
-    const { runPipeline } = await import(
-      "../../services/verification/pipeline"
-    );
-    runPipeline(session.id).catch((err: unknown) => {
-      console.error(`Pipeline error for session ${session.id}:`, err);
-    });
-
-    return {
-      success: true,
-      data: { session_id: session.id, status: "submitted" as const },
-    };
-  });
+    },
+    {
+      params: sessionIdParams,
+      detail: {
+        summary: "Submit session",
+        description: "Marks the verification session as submitted and starts asynchronous processing.",
+        tags: ["Verification"],
+      },
+    },
+  );

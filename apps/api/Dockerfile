@@ -96,12 +96,12 @@ RUN chmod +x ./entrypoint.sh
 ARG DOPPLER_TOKEN
 ENV DOPPLER_TOKEN=${DOPPLER_TOKEN} \
     NODE_ENV=production \
-    PORT=3000
+    PORT=1070
 
 USER nodejs
-EXPOSE 3000
+EXPOSE 1070
 
 HEALTHCHECK --interval=10s --timeout=10s --start-period=30s --retries=5 \
-    CMD curl -f http://localhost:3000/health || exit 1
+    CMD curl -f http://localhost:1070/health || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]
