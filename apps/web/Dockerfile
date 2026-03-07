@@ -73,6 +73,6 @@ USER nodejs
 EXPOSE 1069
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:1069/ || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:1069/api/health || exit 1
 
 CMD ["doppler", "run", "--no-fallback", "--", "./server"]
