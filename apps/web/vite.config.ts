@@ -54,13 +54,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      minify: isProduction ? "terser" : undefined,
-      terserOptions: {
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-        },
-      },
+      minify: isProduction ? "esbuild" : undefined,
+      esbuild: isProduction
+        ? { drop: ["console", "debugger"] }
+        : undefined,
       rollupOptions: {
         output: {
           entryFileNames: "assets/[name]-[hash].js",

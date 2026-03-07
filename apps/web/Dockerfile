@@ -20,12 +20,14 @@ WORKDIR /app
 COPY package.json bunfig.toml tsconfig.json ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
+COPY packages/embed/package.json ./packages/embed/
 
 # Install all dependencies
 RUN bun install --ignore-scripts
 
-# Copy web app source
+# Copy web app source + embed package (aliased in vite.config.ts)
 COPY apps/web ./apps/web
+COPY packages/embed ./packages/embed
 
 # Run tests
 WORKDIR /app/apps/web
