@@ -1,5 +1,5 @@
 # Dockerfile for Web (Vite SPA + Bun static server)
-# Build: docker build --build-arg DOPPLER_TOKEN=$DOPPLER_TOKEN -f apps/web/Dockerfile -t verichan-web .
+# Build: docker build --secret id=DOPPLER_TOKEN,env=DOPPLER_TOKEN -f apps/web/Dockerfile -t verichan-web .
 
 FROM oven/bun:1.2.23-alpine AS base
 
@@ -28,12 +28,15 @@ RUN bun install --ignore-scripts
 COPY apps/web ./apps/web
 
 # Run tests
-ARG DOPPLER_TOKEN
 WORKDIR /app/apps/web
-RUN doppler run --no-fallback -- bunx vitest run
+RUN --mount=type=secret,id=DOPPLER_TOKEN \
+    DOPPLER_TOKEN=$(cat /run/secrets/DOPPLER_TOKEN) \
+    doppler run --no-fallback -- bunx vitest run
 
 # Build with Vite
-RUN doppler run --no-fallback -- bunx --bun vite build
+RUN --mount=type=secret,id=DOPPLER_TOKEN \
+    DOPPLER_TOKEN=$(cat /run/secrets/DOPPLER_TOKEN) \
+    doppler run --no-fallback -- bunx --bun vite build
 
 # Compile static server to binary
 RUN bun build \
@@ -60,10 +63,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/apps/web/dist ./dist
 # Copy compiled server binary
 COPY --from=builder --chown=nodejs:nodejs /app/apps/web/server ./server
 
-# Runtime config
-ARG DOPPLER_TOKEN
-ENV DOPPLER_TOKEN=${DOPPLER_TOKEN} \
-    NODE_ENV=production \
+# Runtime config (DOPPLER_TOKEN must be passed via container env at deploy time)
+ENV NODE_ENV=production \
     PORT=1069
 
 USER nodejs

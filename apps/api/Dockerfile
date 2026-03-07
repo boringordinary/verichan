@@ -1,5 +1,5 @@
 # Dockerfile for Elysia API with Bun + Doppler
-# Build: docker build --build-arg DOPPLER_TOKEN=$DOPPLER_TOKEN -f apps/api/Dockerfile -t verichan-api .
+# Build: docker build --secret id=DOPPLER_TOKEN,env=DOPPLER_TOKEN -f apps/api/Dockerfile -t verichan-api .
 
 FROM oven/bun:1.2.23-alpine AS base
 
@@ -28,20 +28,23 @@ RUN bun install --ignore-scripts
 COPY apps/api ./apps/api
 
 # Run tests
-ARG DOPPLER_TOKEN
 ARG CACHE_BUST=1
 RUN echo "Cache bust: ${CACHE_BUST}"
 
 ENV SKIP_ENV_VALIDATION=1 \
     NODE_ENV=test
-RUN doppler run --no-fallback -- bun test
+RUN --mount=type=secret,id=DOPPLER_TOKEN \
+    DOPPLER_TOKEN=$(cat /run/secrets/DOPPLER_TOKEN) \
+    doppler run --no-fallback -- bun test
 
 # Reset for production build
 ENV NODE_ENV=production
 
 # Compile to standalone binary
 WORKDIR /app/apps/api
-RUN doppler run --no-fallback -- bun build \
+RUN --mount=type=secret,id=DOPPLER_TOKEN \
+    DOPPLER_TOKEN=$(cat /run/secrets/DOPPLER_TOKEN) \
+    doppler run --no-fallback -- bun build \
     --compile \
     --minify-whitespace \
     --minify-syntax \
@@ -92,10 +95,8 @@ COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY apps/api/docker/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
-# Runtime config
-ARG DOPPLER_TOKEN
-ENV DOPPLER_TOKEN=${DOPPLER_TOKEN} \
-    NODE_ENV=production \
+# Runtime config (DOPPLER_TOKEN must be passed via container env at deploy time)
+ENV NODE_ENV=production \
     PORT=1070
 
 USER nodejs
